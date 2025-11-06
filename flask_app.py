@@ -162,20 +162,26 @@ def workflow_status():
 def run_analysis_steps(request_data):
     """Run the initial analysis steps with real AI agent responses via orchestrator."""
     global workflow_state
-    agent_logs = []
+    
+    # Initialize agent_logs in workflow_state if not exists
+    if 'agent_logs' not in workflow_state:
+        workflow_state['agent_logs'] = []
     
     # Step 1: Orchestrator Analysis - ACTIVE
     workflow_state['step'] = 1
     workflow_state['agent_activity'] = "🎯 LogisticsOrchestrator analyzing request..."
-    agent_logs.append({
+    
+    # Add message to workflow_state immediately for real-time display
+    new_message = {
         'step': 1,
         'agent': 'LogisticsOrchestrator',
         'message': f"📋 Analyzing request for {request_data['part_number']} ({request_data['quantity_requested']} units)",
         'timestamp': datetime.now().strftime('%H:%M:%S')
-    })
+    }
+    workflow_state['agent_logs'].append(new_message)
     
-    # Small delay to show step progression
-    time.sleep(0.5)
+    # Delay to show step progression clearly
+    time.sleep(1.0)
     
     # Prepare request data for orchestrator (before try blocks to ensure scope)
     orchestrator_request = {
@@ -202,15 +208,16 @@ def run_analysis_steps(request_data):
             # Step 2: InventoryAgent - ACTIVE
             workflow_state['step'] = 2
             workflow_state['agent_activity'] = "📦 InventoryAgent checking stock levels..."
-            agent_logs.append({
+            new_message = {
                 'step': 2,
                 'agent': 'InventoryAgent',
                 'message': f"🔍 Checking inventory for part {request_data['part_number']} in Central Warehouse",
                 'timestamp': datetime.now().strftime('%H:%M:%S')
-            })
+            }
+            workflow_state['agent_logs'].append(new_message)
             
-            # Small delay to show step progression
-            time.sleep(0.3)
+            # Delay to show step progression clearly
+            time.sleep(1.2)
             
             # Call real inventory agent through orchestrator
             loop = asyncio.new_event_loop()
@@ -232,12 +239,13 @@ def run_analysis_steps(request_data):
                         'stock_status': 'Available' if inventory_result_raw.get('available', False) else 'Unavailable'
                     }
                     
-                    agent_logs.append({
+                    new_message = {
                         'step': 2,
                         'agent': 'InventoryAgent',
                         'message': f"✅ REAL AGENT DATA: Found {inventory_result['available_quantity']} units of {request_data['part_number']} in {inventory_result['warehouse_location']} - Cost: ${inventory_result['estimated_cost']:.2f}",
                         'timestamp': datetime.now().strftime('%H:%M:%S')
-                    })
+                    }
+                    workflow_state['agent_logs'].append(new_message)
                 else:
                     # Handle case where part is not available
                     inventory_result = {
@@ -247,12 +255,13 @@ def run_analysis_steps(request_data):
                         'stock_status': 'Not Available'
                     }
                     
-                    agent_logs.append({
+                    new_message = {
                         'step': 2,
                         'agent': 'InventoryAgent',
                         'message': f"❌ AGENT RESPONSE: Part {request_data['part_number']} not available. Inventory check returned: {inventory_result_raw.get('error', 'Unknown error')}",
                         'timestamp': datetime.now().strftime('%H:%M:%S')
-                    })
+                    }
+                    workflow_state['agent_logs'].append(new_message)
             finally:
                 loop.close()
         else:
@@ -275,23 +284,25 @@ def run_analysis_steps(request_data):
         }
         
         # Add error to agent logs
-        agent_logs.append({
+        new_message = {
             'step': 2,
             'agent': 'InventoryAgent',
             'message': f"❌ INTEGRATION ERROR: Failed to connect to real agent. Using fallback data. Error: {str(e)[:100]}",
             'timestamp': datetime.now().strftime('%H:%M:%S')
-        })
+        }
+        workflow_state['agent_logs'].append(new_message)
     
     
     # Step 3: FleetAgent - ACTIVE  
     workflow_state['step'] = 3
     workflow_state['agent_activity'] = "🚛 FleetAgent optimizing AGV assignment..."
-    agent_logs.append({
+    new_message = {
         'step': 3,
         'agent': 'FleetAgent',
         'message': f"🤖 Analyzing AGV fleet for delivery to {request_data['destination']}",
         'timestamp': datetime.now().strftime('%H:%M:%S')
-    })
+    }
+    workflow_state['agent_logs'].append(new_message)
     
     try:
         if orchestrator and inventory_result['stock_status'] != 'Not Available':
@@ -329,25 +340,27 @@ def run_analysis_steps(request_data):
             'availability_status': 'Ready'
         }
     
-    agent_logs.append({
+    new_message = {
         'step': 3,
         'agent': 'FleetAgent',
         'message': f"🎯 Assigned {fleet_result['vehicle_id']} (Battery: {fleet_result['battery_level']}%) - ETA: {fleet_result['estimated_travel_time']} min",
         'timestamp': datetime.now().strftime('%H:%M:%S')
-    })
+    }
+    workflow_state['agent_logs'].append(new_message)
     
-    # Small delay to show step progression  
-    time.sleep(0.3)
+    # Delay to show step progression clearly
+    time.sleep(1.2)
     
     # Step 4: ApproverAgent - ACTIVE
     workflow_state['step'] = 4
     workflow_state['agent_activity'] = "⚖️ ApproverAgent calculating costs..."
-    agent_logs.append({
+    new_message = {
         'step': 4,
         'agent': 'ApproverAgent',
         'message': f"💰 Calculating total costs for {request_data['priority']} priority request",
         'timestamp': datetime.now().strftime('%H:%M:%S')
-    })
+    }
+    workflow_state['agent_logs'].append(new_message)
     
     try:
         if orchestrator:
@@ -384,34 +397,36 @@ def run_analysis_steps(request_data):
         agv_cost = 25.0
         estimated_cost = inventory_result['estimated_cost'] + handling_cost + agv_cost
     
-    agent_logs.append({
+    new_message = {
         'step': 4,
         'agent': 'ApproverAgent',
         'message': f"💵 Total cost calculated: ${estimated_cost:.2f} (includes materials, handling, and AGV costs)",
         'timestamp': datetime.now().strftime('%H:%M:%S')
-    })
+    }
+    workflow_state['agent_logs'].append(new_message)
     
-    # Small delay to show step progression
-    time.sleep(0.3)
+    # Delay to show step progression clearly
+    time.sleep(1.2)
     
     # Analysis Complete - Set to ready for approval
     workflow_state['step'] = 0  # Ready for approval
     workflow_state['agent_activity'] = "✅ All agents completed analysis - Ready for approval"
     
     # Add completion log
-    agent_logs.append({
+    new_message = {
         'step': 5,
         'agent': 'System',
         'message': f"✅ Analysis complete. Total cost: ${estimated_cost:.2f}. Ready for supervisor approval.",
         'timestamp': datetime.now().strftime('%H:%M:%S')
-    })
+    }
+    workflow_state['agent_logs'].append(new_message)
     
     return {
         'inventory': inventory_result,
         'fleet': fleet_result,
         'total_cost': estimated_cost,
         'analysis_time': time.time() - workflow_state['start_time'],
-        'agent_logs': agent_logs
+        'agent_logs': workflow_state['agent_logs']  # Return the logs from workflow_state
     }
 
 def run_agv_workflow_background():

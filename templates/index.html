@@ -1213,7 +1213,12 @@
                 updateAgentActivity(status.agent_activity);
             }
             
-            // Display AGV logs if available
+            // Display agent logs for current step only (real-time step-by-step display)
+            if (status.agent_logs && status.agent_logs.length > 0) {
+                displayStepBasedAgentLogs(status.agent_logs, status.step);
+            }
+            
+            // Display AGV logs if available (separate from analysis logs)
             if (status.agv_logs && status.agv_logs.length > 0) {
                 displayAgentLogs(status.agv_logs);
             }
@@ -1323,9 +1328,9 @@
                  <p><strong>AGV Operation:</strong> $25.00</p>
                  <p><strong>Total:</strong> $${results.total_cost.toFixed(2)}</p>`;
             
-            // Display agent logs if available
+            // Display agent logs if available (show all logs since analysis is complete)
             if (results.agent_logs) {
-                displayAgentLogs(results.agent_logs);
+                displayStepBasedAgentLogs(results.agent_logs, 0); // 0 means show all logs
             }
             
             document.getElementById('analysisResults').classList.remove('hidden');
@@ -1342,6 +1347,50 @@
         }
         
         let displayedLogsCount = 0;
+        let displayedStepLogsCount = 0;
+        
+        // New function for step-based agent message display
+        function displayStepBasedAgentLogs(logs, currentStep) {
+            const agentLogsContainer = document.getElementById('agentLogs');
+            
+            // Hide "no activity" message when we have logs
+            if (logs && logs.length > 0) {
+                const noActivity = agentLogsContainer.querySelector('.no-activity');
+                if (noActivity) {
+                    noActivity.remove();
+                }
+            }
+            
+            // Only show messages for current step and completed steps
+            const visibleLogs = logs.filter(log => {
+                // Show all logs for steps that are completed (step < currentStep)
+                // or show logs for the current active step
+                return log.step <= currentStep || currentStep === 0; // 0 means ready for approval, show all
+            });
+            
+            // Only add new logs that haven't been displayed yet
+            if (visibleLogs && visibleLogs.length > displayedStepLogsCount) {
+                const newLogs = visibleLogs.slice(displayedStepLogsCount);
+                
+                newLogs.forEach(log => {
+                    const logDiv = document.createElement('div');
+                    logDiv.className = 'agent-log';
+                    logDiv.innerHTML = `
+                        <div class="agent-header">
+                            <span class="agent-name">${log.agent}</span>
+                            <span class="agent-timestamp">${log.timestamp}</span>
+                        </div>
+                        <div class="agent-message">${log.message}</div>
+                    `;
+                    agentLogsContainer.appendChild(logDiv);
+                });
+                
+                displayedStepLogsCount = visibleLogs.length;
+                
+                // Auto-scroll to bottom of agent logs
+                agentLogsContainer.scrollTop = agentLogsContainer.scrollHeight;
+            }
+        }
         
         function displayAgentLogs(logs) {
             const agentLogsContainer = document.getElementById('agentLogs');
@@ -1355,7 +1404,7 @@
                 }
             }
             
-            // Only add new logs that haven't been displayed yet
+            // Only add new logs that haven't been displayed yet (for AGV logs)
             if (logs && logs.length > displayedLogsCount) {
                 const newLogs = logs.slice(displayedLogsCount);
                 
@@ -1424,8 +1473,9 @@
             document.getElementById('progressSection').classList.add('hidden');
             document.getElementById('completionSection').classList.add('hidden');
             
-            // Reset agent logs to "no activity" state
+            // Reset both log counters for step-based and AGV logs
             displayedLogsCount = 0;
+            displayedStepLogsCount = 0;
             const agentLogsContainer = document.getElementById('agentLogs');
             if (agentLogsContainer) {
                 agentLogsContainer.innerHTML = `
