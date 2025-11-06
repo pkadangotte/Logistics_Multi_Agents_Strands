@@ -1,0 +1,12 @@
+# Core application dependencies
+flask
+asyncua
+python-dotenv
+boto3
+
+# Cross-platform script dependencies
+colorama>=0.4.4
+psutil>=5.8.0
+pathlib2>=2.3.0; python_version < '3.4'
+
+strands-agents
