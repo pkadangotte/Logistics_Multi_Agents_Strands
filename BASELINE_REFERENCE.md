@@ -1,8 +1,9 @@
 # 🎯 BASELINE REFERENCE - Multi-Agent Logistics System
 
-## 📅 Baseline Created: November 6, 2025
-**Git Commit:** bdaef60  
-**Git Tag:** v1.0-baseline
+## 📅 Latest Update: November 6, 2025
+**Git Commit:** ab95d5a  
+**Git Tag:** v1.1-step-messages (Latest)  
+**Previous Baseline:** v1.0-baseline
 
 ## ✅ VERIFIED WORKING FEATURES
 
@@ -12,12 +13,18 @@
 - **ApproverAgent**: Real cost calculations ($2,520 total)
 - **LogisticsOrchestratorAgent**: Complete workflow coordination
 
-### 🔄 Real-Time Workflow Steps:
-1. **Step 1**: LogisticsOrchestrator (request analysis) - ACTIVE
-2. **Step 2**: InventoryAgent (stock checking) - ACTIVE  
-3. **Step 3**: FleetAgent (AGV assignment) - ACTIVE
-4. **Step 4**: ApproverAgent (cost calculation) - ACTIVE
-5. **Step 0**: Ready for approval workflow
+### 🔄 Step-Based Real-Time Workflow:
+1. **Step 1**: LogisticsOrchestrator (request analysis) - Messages appear immediately
+2. **Step 2**: InventoryAgent (stock checking) - Progressive message display  
+3. **Step 3**: FleetAgent (AGV assignment) - Real-time agent communication
+4. **Step 4**: ApproverAgent (cost calculation) - Step-by-step visibility
+5. **Step 0**: Ready for approval workflow - All messages visible
+
+### 🎯 **NEW FEATURE: Step-Based Agent Messages**
+- ✨ **Progressive Display**: Agent messages appear as each step becomes active
+- 🔄 **Real-Time Updates**: No more bulk message dumps during approval
+- 👁️ **Visual Clarity**: Clear correlation between step progress and agent activities
+- ⏱️ **Improved Timing**: 1.0-1.2s step delays for better user experience
 
 ### 🌐 Web Interface:
 - **URL**: http://127.0.0.1:5555
@@ -31,13 +38,21 @@
 - **Logs**: `tail -f server.log`
 - **Status**: Professional process management
 
-## 🔧 KEY FIXES IMPLEMENTED:
+## 🔧 KEY FEATURES IMPLEMENTED:
 
+### v1.0-baseline Features:
 1. **Integration Layer**: Fixed orchestrator communication errors
 2. **Real Agent Data**: Eliminated mock data fallbacks  
 3. **Step Tracking**: Sequential workflow step activation
 4. **Error Handling**: Comprehensive logging and debugging
 5. **Method Signatures**: Corrected FleetAgent parameter mismatches
+
+### v1.1-step-messages Features:
+6. **Step-Based Messages**: Progressive agent message display during workflow
+7. **Real-Time UX**: Messages appear as each agent becomes active
+8. **Enhanced Timing**: Improved step progression visibility (1.0-1.2s delays)
+9. **Frontend Logic**: displayStepBasedAgentLogs() function for progressive display
+10. **Backend Sync**: workflow_state['agent_logs'] real-time message storage
 
 ## 🧪 VERIFICATION COMMANDS:
 
@@ -72,11 +87,28 @@ Logistics_Multi_Agents/
 └── README.md                  # Comprehensive documentation
 ```
 
-## 🚀 FUTURE DEVELOPMENT:
-- Start from this baseline for any new features
-- All core functionality is working and verified
-- Real agent integration is stable and tested
-- Use `git checkout v1.0-baseline` to return to this state
+## 🚀 DEVELOPMENT VERSIONS:
+
+### v1.1-step-messages (Current - Latest Features)
+- ✨ Step-based real-time agent message display
+- 🔄 Progressive workflow transparency
+- 🎯 Enhanced user experience with real-time agent visibility
+- **Use:** `git checkout v1.1-step-messages` for latest features
+
+### v1.0-baseline (Stable Foundation)  
+- 🏗️ Core multi-agent system with real data integration
+- ✅ All basic functionality working and verified
+- 🛡️ Stable foundation for new development
+- **Use:** `git checkout v1.0-baseline` for stable starting point
+
+## 🔄 VERSION COMPARISON:
+| Feature | v1.0-baseline | v1.1-step-messages |
+|---------|---------------|-------------------|
+| Real Agent Data | ✅ | ✅ |
+| Step Progression | ✅ | ✅ |
+| Agent Messages | Bulk on Approval | **Progressive Real-Time** |
+| UX Experience | Standard | **Enhanced Progressive** |
+| Message Display | All at Once | **Step-by-Step** |
 
 ---
-**🎉 This baseline represents a fully functional multi-agent logistics system with real-time workflow tracking and complete agent integration.**
+**🎉 Latest version includes step-based real-time agent message display for enhanced user experience and workflow transparency.**
