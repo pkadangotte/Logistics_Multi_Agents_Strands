@@ -3,6 +3,8 @@
 AI-Powered Inventory Agent - Part of Manufacturing Replenishment System
 ======================================================================
 
+REFACTORED VERSION - Now uses InventoryService for business logic separation.
+
 This intelligent agent manages inventory operations including:
 - AI-driven stock level monitoring and predictions
 - Intelligent availability checking with demand forecasting
@@ -10,6 +12,10 @@ This intelligent agent manages inventory operations including:
 - Cost optimization analysis
 - Lead time estimation with AI insights
 - Inventory optimization recommendations
+
+Architecture:
+- InventoryAgent: Strands framework wrapper (this file)
+- InventoryService: Core business logic (extracted to service layer)
 """
 
 import asyncio
@@ -18,20 +24,27 @@ import json
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
 
-# LLM Integration for AI capabilities (using Ollama)
+# Strands Agent imports
+from strands import Agent, tool
+
+# Import the new service layer
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+try:
+    from src.logistics_system.core.inventory_service import InventoryService, get_inventory_service
+    SERVICE_AVAILABLE = True
+except ImportError as e:
+    SERVICE_AVAILABLE = False
+    print(f"Warning: InventoryService not available - {e}")
+
+# Fallback imports for backward compatibility
 try:
     import requests
     LLM_AVAILABLE = True
 except ImportError:
     LLM_AVAILABLE = False
 
-# Strands Agent imports
-from strands import Agent, tool
-
-# Configuration loader import
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config.config_loader import get_inventory_config
 
 logging.basicConfig(level=logging.INFO)
@@ -39,48 +52,67 @@ logger = logging.getLogger(__name__)
 
 class InventoryAgent:
     """
-    AI-Powered Inventory Agent that manages stock operations with intelligent decision-making.
-    Uses LLM for demand forecasting, reorder optimization, and inventory strategy decisions.
+    AI-Powered Inventory Agent - Strands Framework Wrapper.
     
-    This class provides the core business logic and data management for inventory operations,
-    while tools are defined separately and registered with the Strands Agent.
+    REFACTORED: Now delegates business logic to InventoryService for better separation
+    of concerns. This class focuses on Strands framework integration while the service
+    handles core inventory operations.
+    
+    Architecture:
+    - This class: Strands agent wrapper, tool registration, API compatibility
+    - InventoryService: Core business logic, AI integration, data management
     """
     
     def __init__(self, llm_model: str = None):
+        self.llm_model = llm_model or os.getenv('OLLAMA_MODEL', 'qwen2.5:7b')
+        
+        # Initialize the service layer (new architecture)
+        if SERVICE_AVAILABLE:
+            self.service = get_inventory_service()
+            logger.info("✅ Using new InventoryService architecture")
+            
+            # For backward compatibility, expose service data
+            self.inventory_data = getattr(self.service, 'parts_inventory', {})
+            self.demand_history = getattr(self.service, 'demand_history', {})
+            self.llm_enabled = getattr(self.service, 'llm_enabled', False)
+        else:
+            # Fallback to legacy implementation
+            logger.warning("⚠️ InventoryService not available - using legacy implementation")
+            self._init_legacy_implementation()
+        
+        logger.info(f"🧠 InventoryAgent initialized - Service: {SERVICE_AVAILABLE}, Parts: {len(self.inventory_data)}")
+
+    def _init_legacy_implementation(self):
+        """Fallback to legacy implementation if service is unavailable"""
         # Load configuration from .env file
         import os
         llm_backend = os.getenv('LLM_BACKEND', 'ollama').lower()
-        self.llm_model = llm_model or os.getenv('OLLAMA_MODEL', 'qwen2.5:7b')
         self.llm_enabled = LLM_AVAILABLE and (llm_backend == 'ollama')
         
         # Get Ollama URL from .env with fallback
         ollama_base_url = os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434')
         self.ollama_url = f"{ollama_base_url}/api/generate" if not ollama_base_url.endswith('/api/generate') else ollama_base_url
         
-        # Test LLM connection based on backend
+        # Test LLM connection
         if self.llm_enabled and llm_backend == 'ollama':
             try:
-                # Test if Ollama is running
                 test_response = requests.post(
                     self.ollama_url,
                     json={"model": self.llm_model, "prompt": "Hello", "stream": False},
                     timeout=15
                 )
                 if test_response.status_code == 200:
-                    logger.info(f"🧠 Ollama connected successfully for inventory AI with model: {self.llm_model}")
+                    logger.info(f"🧠 Ollama connected (legacy mode) with model: {self.llm_model}")
                 else:
                     self.llm_enabled = False
                     logger.warning(f"🧠 Ollama connection failed - using rule-based inventory management")
             except Exception as e:
                 self.llm_enabled = False
                 logger.warning(f"🧠 Ollama not available ({str(e)}) - using rule-based inventory management")
-        else:
-            logger.warning("🧠 Requests library not available - using rule-based inventory management")
         
-        # Load inventory configuration from config files
+        # Load legacy configuration
         self._load_inventory_configuration()
-        
-        logger.info(f"🧠 AI InventoryAgent initialized with {len(self.inventory_data)} parts and demand history")
+        self.service = None
 
     def _load_inventory_configuration(self):
         """Load inventory data from configuration files"""
@@ -236,6 +268,7 @@ Consider seasonality, trends, and priority patterns in the historical data.
     ) -> Dict[str, Any]:
         """
         Check if requested quantity is available in inventory.
+        REFACTORED: Delegates to InventoryService for business logic.
         
         Args:
             part_number: Part number to check
@@ -245,7 +278,21 @@ Consider seasonality, trends, and priority patterns in the historical data.
         Returns:
             Dict with availability status and details
         """
-        logger.info(f"📦 Checking availability for {part_number} (qty: {quantity_needed})")
+        if self.service and SERVICE_AVAILABLE:
+            # Use new service architecture
+            return await self.service.check_availability(part_number, quantity_needed, priority)
+        else:
+            # Fallback to legacy implementation
+            return await self._legacy_check_availability(part_number, quantity_needed, priority)
+
+    async def _legacy_check_availability(
+        self, 
+        part_number: str, 
+        quantity_needed: int,
+        priority: str = "MEDIUM"
+    ) -> Dict[str, Any]:
+        """Legacy implementation for backward compatibility"""
+        logger.info(f"📦 [LEGACY] Checking availability for {part_number} (qty: {quantity_needed})")
         
         try:
             # Simulate processing time
@@ -335,6 +382,7 @@ Provide recommendation: APPROVE, APPROVE_PARTIAL, or DECLINE with reasoning.
     ) -> Dict[str, Any]:
         """
         Reserve inventory for a specific request.
+        REFACTORED: Delegates to InventoryService for business logic.
         
         Args:
             part_number: Part to reserve
@@ -345,7 +393,22 @@ Provide recommendation: APPROVE, APPROVE_PARTIAL, or DECLINE with reasoning.
         Returns:
             Dict with reservation details
         """
-        logger.info(f"🔒 Reserving {quantity} of {part_number} for {request_id}")
+        if self.service and SERVICE_AVAILABLE:
+            # Use new service architecture
+            return await self.service.reserve_inventory(part_number, quantity, request_id, f"Request: {request_id}")
+        else:
+            # Fallback to legacy implementation
+            return await self._legacy_reserve_inventory(part_number, quantity, request_id, duration_hours)
+
+    async def _legacy_reserve_inventory(
+        self,
+        part_number: str,
+        quantity: int,
+        request_id: str,
+        duration_hours: int = 24
+    ) -> Dict[str, Any]:
+        """Legacy reservation implementation"""
+        logger.info(f"🔒 [LEGACY] Reserving {quantity} of {part_number} for {request_id}")
         
         try:
             await asyncio.sleep(0.1)
@@ -392,6 +455,7 @@ Provide recommendation: APPROVE, APPROVE_PARTIAL, or DECLINE with reasoning.
     async def get_inventory_status(self, part_numbers: List[str] = None) -> Dict[str, Any]:
         """
         Get current inventory status for specified parts or all parts.
+        REFACTORED: Delegates to InventoryService for business logic.
         
         Args:
             part_numbers: List of specific parts to check (optional)
@@ -399,7 +463,16 @@ Provide recommendation: APPROVE, APPROVE_PARTIAL, or DECLINE with reasoning.
         Returns:
             Dict with inventory status
         """
-        logger.info(f"📊 Getting inventory status")
+        if self.service and SERVICE_AVAILABLE:
+            # Use new service architecture
+            return await self.service.get_inventory_status(part_numbers)
+        else:
+            # Fallback to legacy implementation
+            return await self._legacy_get_inventory_status(part_numbers)
+
+    async def _legacy_get_inventory_status(self, part_numbers: List[str] = None) -> Dict[str, Any]:
+        """Legacy status implementation"""
+        logger.info(f"📊 [LEGACY] Getting inventory status")
         
         try:
             await asyncio.sleep(0.1)
@@ -616,6 +689,7 @@ Format as specific daily predictions with reasoning.
             }
 
 # Global InventoryAgent instance for tools to use
+# REFACTORED: Now uses service layer architecture
 _inventory_agent = InventoryAgent(llm_model="qwen2.5:7b")  # Use qwen2.5:7b model for better performance
 
 # Strands Agent Tools - Explicitly registered functions with @tool decorator
