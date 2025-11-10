@@ -449,6 +449,7 @@ Prioritize preventing stockouts while minimizing carrying costs."""
 
     # Configure agent with tools
     agent_kwargs = {
+        "name": "InventoryAgent",
         "system_prompt": system_prompt,
         "tools": [
             check_availability,

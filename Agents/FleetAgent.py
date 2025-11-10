@@ -478,6 +478,7 @@ Prioritize urgent deliveries while maintaining overall fleet productivity."""
 
     # Configure agent with tools
     agent_kwargs = {
+        "name": "FleetAgent",
         "system_prompt": system_prompt,
         "tools": [
             schedule_delivery,

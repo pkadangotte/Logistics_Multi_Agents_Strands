@@ -339,6 +339,11 @@ LOGISTICS_TEMPLATE = """
             background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%);
             border-left-color: #ea580c;
         }
+        .raw_result, .raw_tool_call {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-left-color: #6c757d;
+            font-family: 'Courier New', monospace;
+        }
         
         .log-icon {
             font-size: 1.3em;
@@ -756,7 +761,9 @@ LOGISTICS_TEMPLATE = """
                 'phase_complete': '✅',
                 'final_summary': '🎉',
                 'error': '❌',
-                'approval_needed': '⚖️'
+                'approval_needed': '⚖️',
+                'raw_result': '🔍',
+                'raw_tool_call': '🔧'
             };
             return icons[type] || '📝';
         }

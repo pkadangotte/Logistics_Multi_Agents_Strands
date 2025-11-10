@@ -72,8 +72,8 @@ def create_logistics_orchestrator_agent(use_local_model: bool = True, hooks=None
         try:
 
             
-            # Create inventory agent with its own LLM
-            inventory_agent = create_inventory_agent(use_local_model=True)
+            # Create inventory agent with its own LLM and pass hooks for observability
+            inventory_agent = create_inventory_agent(use_local_model=True, hooks=hooks)
             
             # Call the inventory agent
             result = inventory_agent(query)
@@ -100,8 +100,8 @@ def create_logistics_orchestrator_agent(use_local_model: bool = True, hooks=None
         try:
 
             
-            # Create fleet agent with its own LLM
-            fleet_agent = create_fleet_agent(use_local_model=True)
+            # Create fleet agent with its own LLM and pass hooks for observability
+            fleet_agent = create_fleet_agent(use_local_model=True, hooks=hooks)
             
             # Call the fleet agent
             result = fleet_agent(query)
@@ -128,8 +128,8 @@ def create_logistics_orchestrator_agent(use_local_model: bool = True, hooks=None
         try:
 
             
-            # Create approval agent with its own LLM
-            approval_agent = create_approver_agent(use_local_model=True)
+            # Create approval agent with its own LLM and pass hooks for observability
+            approval_agent = create_approver_agent(use_local_model=True, hooks=hooks)
             
             # Call the approval agent
             result = approval_agent(query)

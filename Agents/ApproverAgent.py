@@ -546,6 +546,7 @@ Prioritize compliance and audit trail integrity while optimizing for processing 
 
     # Configure agent with tools
     agent_kwargs = {
+        "name": "ApproverAgent",
         "system_prompt": system_prompt,
         "tools": [
             process_approval_request,

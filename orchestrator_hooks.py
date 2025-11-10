@@ -349,6 +349,15 @@ class OrchestratorOnlyHook:
         self.current_phase = "planning"
         self.tools_called = set()
         
+        # DEBUG: Raw data mode - disable message cleaning/processing
+        self.raw_mode = True  # Set to False to enable message processing
+        
+        # DEBUG: Enable all agent messages (not just orchestrator)
+        self.capture_all_agents = True  # Set to False for orchestrator-only
+        
+        # Performance tracking
+        self.tool_start_times = {}  # Track when tools start
+        
         print(f"🔍 Langfuse OrchestratorHook initialized: session_id={self.session_id[:8]}, task_id={task_id[:8]}")
         
         # Log the initial session start to Langfuse
@@ -398,8 +407,19 @@ class OrchestratorOnlyHook:
             # Track tools and determine phase
             self.tools_called.add(tool_name)
             
-            # Only capture if this is the main orchestrator
-            if 'orchestrator' in agent_name.lower() or agent_name == 'LogisticsOrchestrator':
+            # Capture orchestrator OR all agents based on debug mode
+            should_capture = (
+                'orchestrator' in agent_name.lower() or 
+                agent_name == 'LogisticsOrchestrator' or
+                self.capture_all_agents
+            )
+            
+            if should_capture:
+                
+                # Track timing for performance analysis
+                import time
+                tool_key = f"{agent_name}_{tool_name}"
+                self.tool_start_times[tool_key] = time.time()
                 
                 # Check for phase transitions and send headers immediately
                 new_phase = None
@@ -411,32 +431,42 @@ class OrchestratorOnlyHook:
                     self.send_phase_header(new_phase)
                     self.current_phase = new_phase
                 
-                # Send reasoning message immediately
-                reasoning_message = self.generate_tool_selection_reasoning(tool_name, tool_input_raw)
-                if reasoning_message:
+                if self.raw_mode:
+                    # DEBUG RAW MODE: Send raw tool call data with agent info and timing
+                    agent_display = f"**{agent_name}**" if agent_name != "LogisticsOrchestrator" else "**LogisticsOrchestrator** (Main)"
                     self.log_message(
-                        "reasoning",
-                        reasoning_message,
-                        {"tool": tool_name, "phase": self.current_phase}
+                        "raw_tool_call",
+                        f"🔧 **RAW TOOL CALL from {agent_display}**\n\n🛠️ Tool: **{tool_name}**\n📝 Input: {tool_input_raw}\n⏰ Started: {time.strftime('%H:%M:%S')}",
+                        {"tool": tool_name, "agent": agent_name, "phase": self.current_phase, "raw_data": True, "start_time": time.time()}
                     )
-                
-                # Generate action message
-                # Send progress message immediately
-                action_message = self.generate_tool_action_message(tool_name, tool_input_raw)
-                if 'inventory' in tool_name:
-                    progress_message = f"🔍 **Checking Inventory**\n\n{action_message}"
-                elif 'fleet' in tool_name:
-                    progress_message = f"🚛 **Coordinating Fleet**\n\n{action_message}"
-                elif 'approval' in tool_name:
-                    progress_message = f"⚖️ **Processing Approval**\n\n{action_message}"
                 else:
-                    progress_message = f"⚙️ **Processing Request**\n\n{action_message}"
-                
-                self.log_message(
-                    "progress",
-                    progress_message,
-                    {"tool": tool_name, "phase": self.current_phase, "is_loading": True}
-                )
+                    # Normal processing mode
+                    # Send reasoning message immediately
+                    reasoning_message = self.generate_tool_selection_reasoning(tool_name, tool_input_raw)
+                    if reasoning_message:
+                        self.log_message(
+                            "reasoning",
+                            reasoning_message,
+                            {"tool": tool_name, "phase": self.current_phase}
+                        )
+                    
+                    # Generate action message
+                    # Send progress message immediately
+                    action_message = self.generate_tool_action_message(tool_name, tool_input_raw)
+                    if 'inventory' in tool_name:
+                        progress_message = f"🔍 **Checking Inventory**\n\n{action_message}"
+                    elif 'fleet' in tool_name:
+                        progress_message = f"🚛 **Coordinating Fleet**\n\n{action_message}"
+                    elif 'approval' in tool_name:
+                        progress_message = f"⚖️ **Processing Approval**\n\n{action_message}"
+                    else:
+                        progress_message = f"⚙️ **Processing Request**\n\n{action_message}"
+                    
+                    self.log_message(
+                        "progress",
+                        progress_message,
+                        {"tool": tool_name, "phase": self.current_phase, "is_loading": True}
+                    )
         except Exception as e:
             print(f"🪝 Error in before_tool_call: {e}")
     
@@ -455,25 +485,51 @@ class OrchestratorOnlyHook:
             # Get the result
             result = getattr(event, 'result', getattr(event, 'output', getattr(event, 'response', {})))
             
-            # Only capture if this is the main orchestrator
-            if 'orchestrator' in agent_name.lower() or agent_name == 'LogisticsOrchestrator':
+            # Capture orchestrator OR all agents based on debug mode
+            should_capture = (
+                'orchestrator' in agent_name.lower() or 
+                agent_name == 'LogisticsOrchestrator' or
+                self.capture_all_agents
+            )
+            
+            if should_capture:
                 
-                # Send analysis immediately
-                raw_analysis = self.generate_result_analysis(result, tool_name)
-                if raw_analysis:
+                if self.raw_mode:
+                    # Calculate execution time
+                    import time
+                    tool_key = f"{agent_name}_{tool_name}"
+                    duration = None
+                    if tool_key in self.tool_start_times:
+                        duration = time.time() - self.tool_start_times[tool_key]
+                        del self.tool_start_times[tool_key]  # Clean up
+                    
+                    duration_str = f"⏱️ Duration: **{duration:.2f}s**" if duration else "⏱️ Duration: Unknown"
+                    agent_display = f"**{agent_name}**" if agent_name != "LogisticsOrchestrator" else "**LogisticsOrchestrator** (Main)"
+                    
+                    # DEBUG RAW MODE: Send raw result data with timing
                     self.log_message(
-                        "analysis",
-                        raw_analysis,
-                        {"tool": tool_name, "phase": self.current_phase}
+                        "raw_result",
+                        f"✅ **RAW RESULT from {agent_display}**\n\n🛠️ Tool: **{tool_name}**\n{duration_str}\n⏰ Completed: {time.strftime('%H:%M:%S')}\n\n📋 Result: {str(result)}",
+                        {"tool": tool_name, "agent": agent_name, "phase": self.current_phase, "raw_data": True, "duration": duration}
                     )
-                
-                # Send result immediately
-                user_friendly_result = self.extract_user_friendly_content(result, tool_name)
-                self.log_message(
-                    "result",
-                    user_friendly_result,
-                    {"tool": tool_name, "phase": self.current_phase, "is_complete": True}
-                )
+                else:
+                    # Normal processing mode
+                    # Send analysis immediately
+                    raw_analysis = self.generate_result_analysis(result, tool_name)
+                    if raw_analysis:
+                        self.log_message(
+                            "analysis",
+                            raw_analysis,
+                            {"tool": tool_name, "phase": self.current_phase}
+                        )
+                    
+                    # Send result immediately
+                    user_friendly_result = self.extract_user_friendly_content(result, tool_name)
+                    self.log_message(
+                        "result",
+                        user_friendly_result,
+                        {"tool": tool_name, "phase": self.current_phase, "is_complete": True}
+                    )
                 
                 # Check if we should send phase completion
                 if self.current_phase == "planning" and len(self.tools_called) >= 2 and 'approval' not in self.tools_called:
@@ -551,8 +607,14 @@ class OrchestratorOnlyHook:
         try:
             agent_name = getattr(event.agent, 'name', 'LogisticsOrchestrator')
             
-            # Only capture if this is the main orchestrator
-            if 'orchestrator' in agent_name.lower() or agent_name == 'LogisticsOrchestrator':
+            # Capture orchestrator OR all agents based on debug mode
+            should_capture = (
+                'orchestrator' in agent_name.lower() or 
+                agent_name == 'LogisticsOrchestrator' or
+                self.capture_all_agents
+            )
+            
+            if should_capture:
                 # Extract actual LLM response content
                 actual_reasoning = self.extract_llm_reasoning(event)
                 

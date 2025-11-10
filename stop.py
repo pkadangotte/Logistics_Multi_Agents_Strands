@@ -31,8 +31,10 @@ def find_flask_processes():
             proc = psutil.Process(pid)
             if proc.is_running():
                 cmdline = ' '.join(proc.cmdline())
-                # Check for either flask run or strands_flask_app.py patterns
-                if ('flask run' in cmdline and 'strands_flask_app.py' in cmdline) or 'strands_flask_app.py' in cmdline:
+                # Check for flask processes running on our port (5555) or our app files
+                if (('flask run' in cmdline and '--port=5555' in cmdline) or 
+                    'strands_flask_app.py' in cmdline or
+                    ('flask run' in cmdline and 'Logistics_Multi_Agents_Strands' in cmdline)):
                     processes.append(proc)
         except (ValueError, psutil.NoSuchProcess, psutil.AccessDenied):
             # PID file exists but process is not running, remove stale PID file
@@ -43,8 +45,10 @@ def find_flask_processes():
         try:
             if proc.info['cmdline']:
                 cmdline = ' '.join(proc.info['cmdline'])
-                # Look for either flask run or strands_flask_app.py patterns
-                if (('flask run' in cmdline and 'strands_flask_app.py' in cmdline) or 'strands_flask_app.py' in cmdline):
+                # Look for flask processes that match our application
+                if (('flask run' in cmdline and '--port=5555' in cmdline) or 
+                    'strands_flask_app.py' in cmdline or
+                    ('flask run' in cmdline and 'Logistics_Multi_Agents_Strands' in cmdline)):
                     if proc not in processes:  # Avoid duplicates
                         processes.append(proc)
         except (psutil.NoSuchProcess, psutil.AccessDenied):
