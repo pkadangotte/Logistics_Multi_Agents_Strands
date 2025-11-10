@@ -27,8 +27,8 @@ def real_orchestrator_agent(request_data: dict, queue: Queue, task_id: str):
         # Import the hooks
         from orchestrator_hooks import create_orchestrator_hooks
         
-        # Create hooks for this task
-        hooks = create_orchestrator_hooks(queue, task_id, log_to_file=True)
+        # Create Langfuse-enabled hooks for this task
+        hooks = create_orchestrator_hooks(queue, task_id)
         
         # Create detailed query for the orchestrator
         query = f"""

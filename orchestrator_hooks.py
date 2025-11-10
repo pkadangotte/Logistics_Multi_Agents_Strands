@@ -1,225 +1,366 @@
 #!/usr/bin/env python3
 """
-Orchestrator-Only Hooks - Capture Only Main Orchestrator Messages
-==================================================================
+Langfuse-based Agent Observability - Professional LLM Tracing & Analytics
+=========================================================================
 
-This module provides hooks that capture ONLY the main orchestrator agent's 
-messages, not sub-agent messages, and logs them to a file.
+This module provides Langfuse integration for comprehensive agent observability,
+tracing, and analytics in our multi-agent logistics system.
 """
 
 import json
 import os
-import threading
-import time
-import asyncio
-import weakref
-from datetime import datetime, timedelta
-from queue import Queue, PriorityQueue
-from typing import Dict, Any, Optional, Tuple
-from collections import defaultdict
-from functools import lru_cache
+import uuid
+from datetime import datetime
+from queue import Queue
+from typing import Dict, Any, Optional
 
-class HighPerformanceMessageQueue:
-    """
-    High-performance message queue with priority handling and batching.
-    Separate queues for UI updates (high priority) and logging (low priority).
-    """
+# Langfuse imports - make optional
+LANGFUSE_ENABLED = False
+langfuse = None
+
+try:
+    from langfuse import Langfuse, observe
     
-    def __init__(self, ui_queue: Queue):
-        self.ui_queue = ui_queue  # Original queue for UI updates
-        self.priority_queue = PriorityQueue()  # High-priority immediate messages
-        self.batch_queue = []  # Low-priority batch messages
-        self.batch_lock = threading.Lock()
+    # Initialize Langfuse client if keys are available
+    public_key = os.getenv("LANGFUSE_PUBLIC_KEY")
+    secret_key = os.getenv("LANGFUSE_SECRET_KEY")
+    
+    if public_key and secret_key:
+        langfuse = Langfuse(
+            public_key=public_key,
+            secret_key=secret_key,
+            host=os.getenv("LANGFUSE_HOST", "https://cloud.langfuse.com")
+        )
+        LANGFUSE_ENABLED = True
+        print(f"🔍 Langfuse initialized for agent observability")
+    else:
+        print(f"🔍 Langfuse disabled - no API keys provided (optional)")
+        # Create a dummy langfuse object
+        class DummyLangfuse:
+            def __getattr__(self, name):
+                return lambda *args, **kwargs: None
+        langfuse = DummyLangfuse()
         
-        # Start background worker for batch processing
-        self._start_batch_worker()
+except ImportError:
+    print(f"🔍 Langfuse not installed - observability disabled (optional)")
+    # Create a dummy langfuse object
+    class DummyLangfuse:
+        def __getattr__(self, name):
+            return lambda *args, **kwargs: None
+    langfuse = DummyLangfuse()
+
+class LangfuseAgentTracer:
+    """
+    Langfuse-based agent tracing with professional observability features.
+    Provides distributed tracing, performance analytics, and agent interaction tracking.
+    """
     
-    def put_priority(self, message: str, priority: int = 1):
-        """Put high-priority message (UI updates) - immediate delivery."""
+    def __init__(self, session_id: str = None):
+        self.session_id = session_id or str(uuid.uuid4())
+        self.trace_id = None
+        self.enabled = LANGFUSE_ENABLED
+        
+        if not self.enabled:
+            print(f"🔍 Langfuse tracer initialized (disabled)")
+            return
+        
+        # Create main trace for this session using the new API
         try:
-            self.priority_queue.put((priority, time.time(), message), block=False)
-            self._process_priority_messages()
-        except:
-            pass  # Don't block on queue full
+            self.trace_id = langfuse.create_trace_id()
+            # Update the trace with metadata
+            langfuse.update_current_trace(
+                name="logistics_orchestrator_session",
+                session_id=self.session_id,
+                metadata={"system": "multi_agent_logistics", "version": "1.0"}
+            )
+            print(f"🔍 Langfuse trace started: session_id={self.session_id}")
+        except Exception as e:
+            print(f"🔍 Langfuse trace creation disabled: {e}")
+            self.trace_id = None
+            self.enabled = False
     
-    def put_batch(self, message: str):
-        """Put low-priority message (logging) - batched delivery."""
-        with self.batch_lock:
-            self.batch_queue.append((time.time(), message))
-    
-    def _process_priority_messages(self):
-        """Process all pending priority messages immediately."""
-        while not self.priority_queue.empty():
-            try:
-                _, timestamp, message = self.priority_queue.get_nowait()
-                self.ui_queue.put(message, block=False)
-            except:
-                break
-    
-    def _start_batch_worker(self):
-        """Start background worker for batch message processing."""
-        def batch_worker():
-            while True:
-                time.sleep(0.5)  # Process batches every 500ms
-                with self.batch_lock:
-                    if self.batch_queue:
-                        # Process batch in chunks to avoid blocking
-                        batch = self.batch_queue[:10]  # Process up to 10 at a time
-                        self.batch_queue = self.batch_queue[10:]
-                        
-                        for timestamp, message in batch:
-                            try:
-                                self.ui_queue.put(message, block=False)
-                            except:
-                                pass  # Continue processing other messages
-        
-        worker_thread = threading.Thread(target=batch_worker, daemon=True)
-        worker_thread.start()
-
-
-class ResultCache:
-    """
-    High-performance LRU cache for agent results with TTL support.
-    Caches frequently accessed results to avoid re-processing.
-    """
-    
-    def __init__(self, max_size: int = 100, ttl_seconds: int = 300):
-        self.max_size = max_size
-        self.ttl_seconds = ttl_seconds
-        self.cache = {}  # key -> (result, timestamp)
-        self.access_times = {}  # key -> last_access_time
-        self.lock = threading.RLock()
-    
-    def get(self, key: str) -> Optional[Any]:
-        """Get cached result if available and not expired."""
-        with self.lock:
-            if key in self.cache:
-                result, timestamp = self.cache[key]
-                if time.time() - timestamp < self.ttl_seconds:
-                    self.access_times[key] = time.time()
-                    return result
-                else:
-                    # Expired entry
-                    self._remove_key(key)
+    def log_agent_message(self, agent_name: str, message_type: str, content: str, 
+                         metadata: Dict = None, parent_span: str = None):
+        """Log agent message with Langfuse observability."""
+        if not self.enabled or self.trace_id is None:
+            return None
+            
+        try:
+            # Create span for this message using new API
+            span = langfuse.start_span(
+                name=f"{agent_name}_{message_type}",
+                input={"message_type": message_type, "content": content},
+                metadata={
+                    "agent": agent_name,
+                    "message_type": message_type,
+                    "timestamp": datetime.now().isoformat(),
+                    **(metadata or {})
+                }
+            )
+            
+            # Update the span with output
+            langfuse.update_current_span(
+                output={"content": content, "status": "success"}
+            )
+            
+            return span
+            
+        except Exception as e:
+            print(f"🔍 Langfuse logging error: {e}")
             return None
     
-    def put(self, key: str, result: Any):
-        """Cache result with current timestamp."""
-        with self.lock:
-            current_time = time.time()
+    def log_tool_call(self, tool_name: str, input_data: Dict, output_data: Any, 
+                     duration_ms: float = None, metadata: Dict = None):
+        """Log tool calls with performance metrics."""
+        if not self.enabled or self.trace_id is None:
+            return None
             
-            # Evict old entries if cache is full
-            if len(self.cache) >= self.max_size:
-                self._evict_lru()
+        try:
+            generation = langfuse.start_generation(
+                name=f"tool_{tool_name}",
+                input=input_data,
+                metadata={
+                    "tool_name": tool_name,
+                    "duration_ms": duration_ms,
+                    "timestamp": datetime.now().isoformat(),
+                    **(metadata or {})
+                }
+            )
             
-            self.cache[key] = (result, current_time)
-            self.access_times[key] = current_time
+            # Update with output
+            langfuse.update_current_generation(
+                output=output_data,
+                usage={"latency_ms": duration_ms} if duration_ms else None
+            )
+            
+            return generation
+            
+        except Exception as e:
+            print(f"🔍 Langfuse tool call error: {e}")
+            return None
     
-    def _evict_lru(self):
-        """Evict least recently used entry."""
-        if self.access_times:
-            lru_key = min(self.access_times.keys(), key=lambda k: self.access_times[k])
-            self._remove_key(lru_key)
+    def log_llm_call(self, model: str, input_messages: list, output: str, 
+                    usage: Dict = None, metadata: Dict = None):
+        """Log LLM calls with token usage and performance data."""
+        if not self.enabled or self.trace_id is None:
+            return None
+            
+        try:
+            generation = langfuse.start_generation(
+                name=f"llm_{model}",
+                model=model,
+                input=input_messages,
+                usage=usage,
+                metadata={
+                    "model": model,
+                    "timestamp": datetime.now().isoformat(),
+                    **(metadata or {})
+                }
+            )
+            
+            # Update with output
+            langfuse.update_current_generation(output=output)
+            
+            return generation
+            
+        except Exception as e:
+            print(f"🔍 Langfuse LLM call error: {e}")
+            return None
     
-    def _remove_key(self, key: str):
-        """Remove key from both caches."""
-        self.cache.pop(key, None)
-        self.access_times.pop(key, None)
-    
-    @lru_cache(maxsize=50)
-    def generate_cache_key(self, tool_name: str, input_hash: str) -> str:
-        """Generate cache key for tool result."""
-        return f"{tool_name}:{input_hash}"
+    def finalize_trace(self):
+        """Finalize the trace and flush to Langfuse."""
+        if not self.enabled:
+            return
+            
+        try:
+            if self.trace_id:
+                langfuse.update_current_trace(
+                    output={"status": "completed", "session_id": self.session_id}
+                )
+            
+            # Flush all pending data to Langfuse
+            langfuse.flush()
+            print(f"🔍 Langfuse trace finalized: {self.session_id}")
+            
+        except Exception as e:
+            print(f"🔍 Langfuse finalization error: {e}")
 
+# Global tracer instance
+current_tracer = None
 
-class ConnectionPool:
-    """
-    HTTP connection pool for Ollama API calls to reduce connection overhead.
-    Reuses connections and handles connection lifecycle.
-    """
-    
-    def __init__(self, max_connections: int = 5):
-        self.max_connections = max_connections
-        self.available_connections = []
-        self.active_connections = weakref.WeakSet()
-        self.connection_stats = defaultdict(int)
-        self.lock = threading.Lock()
-    
-    def get_connection_info(self) -> Dict[str, int]:
-        """Get connection pool statistics."""
-        with self.lock:
-            return {
-                'available': len(self.available_connections),
-                'active': len(self.active_connections),
-                'total_created': self.connection_stats['created'],
-                'total_reused': self.connection_stats['reused']
-            }
-    
-    def prepare_for_request(self) -> Dict[str, Any]:
-        """Prepare optimized request configuration."""
-        return {
-            'timeout': 15,  # Reduced from default
-            'headers': {
-                'Connection': 'keep-alive',
-                'Keep-Alive': 'timeout=60, max=100'
-            }
+# Message storage for UI updates (thread-safe)  
+message_queue = Queue()
+
+def add_ui_message(message_type, content, metadata=None):
+    """Add message to UI queue."""
+    try:
+        timestamp = datetime.now()
+        message = {
+            'timestamp': timestamp.strftime("%H:%M:%S"),
+            'type': message_type,
+            'content': content,
+            'metadata': metadata or {}
         }
+        
+        # Add to UI queue
+        message_queue.put(message)
+        print(f"🔍 UI Message: [{message_type}] {content}")
+        
+    except Exception as e:
+        print(f"🔍 Error adding UI message: {e}")
 
+def on_session_start(session_id):
+    """Hook for when orchestrator session starts."""
+    global current_tracer
+    
+    # Initialize Langfuse tracer for this session
+    current_tracer = LangfuseAgentTracer(session_id)
+    
+    add_ui_message("info", f"🚀 Orchestrator session started: {session_id}")
+    
+    # Log session start in Langfuse
+    current_tracer.log_agent_message(
+        agent_name="orchestrator",
+        message_type="session_start", 
+        content=f"Session {session_id} initialized",
+        metadata={"session_id": session_id}
+    )
+    
+    print(f"🔍 Langfuse session started: {session_id}")
+
+def on_agent_message(agent_name, message_type, content, metadata=None):
+    """Hook for agent messages."""
+    add_ui_message("agent", f"[{agent_name}] {message_type}: {content}", 
+                  {"agent": agent_name, "type": message_type})
+    
+    # Log to Langfuse if tracer is available
+    if current_tracer:
+        current_tracer.log_agent_message(
+            agent_name=agent_name,
+            message_type=message_type,
+            content=content,
+            metadata=metadata
+        )
+
+def on_tool_call(tool_name, input_data, output_data, metadata=None):
+    """Hook for tool calls."""
+    add_ui_message("tool", f"🔧 Tool: {tool_name} - {str(output_data)[:100]}")
+    
+    # Log to Langfuse if tracer is available
+    if current_tracer:
+        current_tracer.log_tool_call(
+            tool_name=tool_name,
+            input_data=input_data,
+            output_data=output_data,
+            metadata=metadata
+        )
+
+def on_llm_call(model, input_messages, output, metadata=None):
+    """Hook for LLM calls."""
+    add_ui_message("llm", f"🤖 {model}: {output[:100]}...")
+    
+    # Log to Langfuse if tracer is available
+    if current_tracer:
+        # Extract usage data if available in metadata
+        usage = metadata.get("usage") if metadata else None
+        
+        current_tracer.log_llm_call(
+            model=model,
+            input_messages=input_messages,
+            output=output,
+            usage=usage,
+            metadata=metadata
+        )
+
+def on_session_end():
+    """Hook for when orchestrator session ends."""
+    global current_tracer
+    
+    add_ui_message("info", f"🏁 Orchestrator session ended")
+    
+    # Finalize Langfuse trace
+    if current_tracer:
+        current_tracer.finalize_trace()
+        current_tracer = None
+    
+    print(f"🔍 Langfuse session finalized")
+
+def get_messages():
+    """Get all queued messages for UI."""
+    messages = []
+    while not message_queue.empty():
+        try:
+            messages.append(message_queue.get_nowait())
+        except:
+            break
+    return messages
+
+def get_current_session_id():
+    """Get the current session ID."""
+    return current_tracer.session_id if current_tracer else None
+
+# Langfuse decorators for easy agent method tracing
+def trace_agent_method(agent_name: str):
+    """Decorator to automatically trace agent methods with Langfuse."""
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            try:
+                # Create a span for this agent method
+                span = langfuse.start_span(
+                    name=f"{agent_name}_{func.__name__}",
+                    input={"args": str(args), "kwargs": str(kwargs)}
+                )
+                
+                result = func(*args, **kwargs)
+                
+                # Update span with successful result
+                langfuse.update_current_span(
+                    output={"result": str(result), "status": "success"}
+                )
+                
+                # Also add UI message for visibility
+                add_ui_message("agent", f"[{agent_name}] {func.__name__} completed")
+                
+                return result
+            except Exception as e:
+                # Log error to Langfuse
+                langfuse.update_current_span(
+                    output={"error": str(e), "status": "error"}
+                )
+                raise
+        return wrapper
+    return decorator
 
 class OrchestratorOnlyHook:
     """
-    High-performance hook that captures only the main orchestrator agent messages.
-    Features: async processing, result caching, priority queuing, connection pooling.
+    Langfuse-based orchestrator hook for professional observability.
+    Combines UI message queue with Langfuse tracing for comprehensive monitoring.
     """
     
-    def __init__(self, queue: Queue, task_id: str, log_to_file: bool = True):
+    def __init__(self, queue: Queue, task_id: str):
+        self.queue = queue
         self.task_id = task_id
-        self.log_to_file = log_to_file
+        self.session_id = str(uuid.uuid4())  # Unique session ID
         
-        # HIGH-PERFORMANCE: Initialize advanced components
-        self.message_queue = HighPerformanceMessageQueue(queue)
-        self.result_cache = ResultCache(max_size=200, ttl_seconds=600)  # 10-minute TTL
-        self.connection_pool = ConnectionPool(max_connections=3)
+        # Initialize Langfuse tracer
+        self.tracer = LangfuseAgentTracer(self.session_id)
         
-        # Phase tracking for grouped messages
+        # Phase tracking
         self.current_phase = "planning"
-        self.phase_messages = {
-            "planning": [],
-            "approval": [],
-            "execution": [],
-            "summary": []
-        }
         self.tools_called = set()
         
-        # PERFORMANCE: Advanced log buffering with async support
-        self._log_buffer = []
-        self._buffer_lock = threading.Lock()
-        self._flush_timer = None
-        self._async_tasks = set()
+        print(f"🔍 Langfuse OrchestratorHook initialized: session_id={self.session_id[:8]}, task_id={task_id[:8]}")
         
-        # Performance metrics
-        self.performance_metrics = {
-            'hook_calls': 0,
-            'cache_hits': 0,
-            'cache_misses': 0,
-            'avg_processing_time': 0.0
-        }
-        
-        # Create logs directory if it doesn't exist
-        if self.log_to_file:
-            os.makedirs("logs", exist_ok=True)
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            self.log_file = f"logs/orchestrator_{timestamp}_{task_id[:8]}.log"
-            
-            # Initialize log file with performance info
-            with open(self.log_file, 'w') as f:
-                f.write(f"High-Performance Orchestrator Log - Task: {task_id}\n")
-                f.write(f"Started: {datetime.now().isoformat()}\n")
-                f.write("Performance Features: Async Processing, Result Caching, Priority Queuing\n")
-                f.write("=" * 60 + "\n\n")
-            
-            # PERFORMANCE: Start advanced buffer management
-            self._start_flush_timer()
+        # Log the initial session start to Langfuse
+        self.tracer.log_agent_message(
+            agent_name="LogisticsOrchestrator",
+            message_type="session_start",
+            content=f"Starting logistics orchestrator session for task: {task_id}",
+            metadata={
+                "task_id": task_id,
+                "session_start_time": datetime.now().isoformat()
+            }
+        )
     
     def register_hooks(self, registry):
         """Register hooks with the Strands hook registry."""
@@ -238,128 +379,112 @@ class OrchestratorOnlyHook:
             print(f"🪝 Hook registration error: {e}")
     
     def before_tool_call(self, event):
-        """Hook: Before tool call - HIGH PERFORMANCE with async processing and caching."""
+        """Hook: Before tool call - capture orchestrator's decision reasoning and intent."""
         try:
             agent_name = getattr(event.agent, 'name', 'LogisticsOrchestrator')
             
-            # PERFORMANCE: Ultra-fast agent name check with caching
-            if not self._is_orchestrator_agent(agent_name):
-                return  # Early exit for non-orchestrator agents
+            # Extract tool info for detailed analysis
+            selected_tool = getattr(event, 'selected_tool', None)
+            tool_use = getattr(event, 'tool_use', None)
             
-            # PERFORMANCE: Cached tool extraction
-            tool_name = self._extract_tool_name_cached(getattr(event, 'tool_use', None))
+            tool_name = 'unknown_tool'
+            tool_input_raw = {}
             
-            # PERFORMANCE: Atomic phase tracking
+            # Get tool details from tool_use
+            if tool_use and isinstance(tool_use, dict):
+                tool_name = tool_use.get('name', 'unknown_tool')
+                tool_input_raw = tool_use.get('input', {})
+            
+            # Track tools and determine phase
             self.tools_called.add(tool_name)
             
-            # PERFORMANCE: Optimized phase detection with caching
-            new_phase = self._detect_phase_transition(tool_name)
-            if new_phase and new_phase != self.current_phase:
-                self.send_phase_header(new_phase)
-                self.current_phase = new_phase
-            
-            # PERFORMANCE: Pre-computed message templates with caching
-            message = self._get_cached_progress_message(tool_name)
-            
-            # Ultra-fast log call with priority queuing
-            self.log_message(
-                "progress",
-                message,
-                {"tool": tool_name, "phase": self.current_phase, "is_loading": True}
-            )
-            
+            # Only capture if this is the main orchestrator
+            if 'orchestrator' in agent_name.lower() or agent_name == 'LogisticsOrchestrator':
+                
+                # Check for phase transitions and send headers immediately
+                new_phase = None
+                if 'approval' in tool_name and self.current_phase != "approval":
+                    new_phase = "approval"
+                
+                # Send phase header immediately when transitioning
+                if new_phase and new_phase != self.current_phase:
+                    self.send_phase_header(new_phase)
+                    self.current_phase = new_phase
+                
+                # Send reasoning message immediately
+                reasoning_message = self.generate_tool_selection_reasoning(tool_name, tool_input_raw)
+                if reasoning_message:
+                    self.log_message(
+                        "reasoning",
+                        reasoning_message,
+                        {"tool": tool_name, "phase": self.current_phase}
+                    )
+                
+                # Generate action message
+                # Send progress message immediately
+                action_message = self.generate_tool_action_message(tool_name, tool_input_raw)
+                if 'inventory' in tool_name:
+                    progress_message = f"🔍 **Checking Inventory**\n\n{action_message}"
+                elif 'fleet' in tool_name:
+                    progress_message = f"🚛 **Coordinating Fleet**\n\n{action_message}"
+                elif 'approval' in tool_name:
+                    progress_message = f"⚖️ **Processing Approval**\n\n{action_message}"
+                else:
+                    progress_message = f"⚙️ **Processing Request**\n\n{action_message}"
+                
+                self.log_message(
+                    "progress",
+                    progress_message,
+                    {"tool": tool_name, "phase": self.current_phase, "is_loading": True}
+                )
         except Exception as e:
             print(f"🪝 Error in before_tool_call: {e}")
     
-    @lru_cache(maxsize=32)
-    def _is_orchestrator_agent(self, agent_name: str) -> bool:
-        """Cached check for orchestrator agent."""
-        return 'orchestrator' in agent_name.lower() or agent_name == 'LogisticsOrchestrator'
-    
-    @lru_cache(maxsize=16)
-    def _extract_tool_name_cached(self, tool_use: Any) -> str:
-        """Cached tool name extraction."""
-        if tool_use and isinstance(tool_use, dict):
-            return tool_use.get('name', 'unknown_tool')
-        return 'unknown_tool'
-    
-    @lru_cache(maxsize=8)
-    def _detect_phase_transition(self, tool_name: str) -> Optional[str]:
-        """Cached phase transition detection."""
-        if 'approval' in tool_name and self.current_phase != "approval":
-            return "approval"
-        return None
-    
-    @lru_cache(maxsize=16)
-    def _get_cached_progress_message(self, tool_name: str) -> str:
-        """Pre-computed progress messages with caching."""
-        if 'inventory' in tool_name:
-            return "🔍 **Checking Inventory**\n\nQuerying warehouse systems for availability and pricing..."
-        elif 'fleet' in tool_name:
-            return "🚛 **Coordinating Fleet**\n\nFinding optimal AGV and calculating delivery routes..."
-        elif 'approval' in tool_name:
-            return "⚖️ **Processing Approval**\n\nValidating cost parameters and authorization requirements..."
-        else:
-            return f"⚙️ **Processing {tool_name}**\n\nExecuting specialized workflow component..."
-    
     def after_tool_call(self, event):
-        """Hook: After tool call - HIGH PERFORMANCE with result caching and async processing."""
+        """Hook: After tool call - capture orchestrator's analysis of tool results."""
         try:
             agent_name = getattr(event.agent, 'name', 'LogisticsOrchestrator')
             
-            # PERFORMANCE: Ultra-fast cached agent check
-            if not self._is_orchestrator_agent(agent_name):
-                return
+            # Get tool info
+            tool_use = getattr(event, 'tool_use', None)
+            tool_name = 'unknown_tool'
             
-            # PERFORMANCE: Cached tool extraction
-            tool_name = self._extract_tool_name_cached(getattr(event, 'tool_use', None))
+            if tool_use and isinstance(tool_use, dict):
+                tool_name = tool_use.get('name', 'unknown_tool')
             
-            # PERFORMANCE: Get result with caching and connection pooling
+            # Get the result
             result = getattr(event, 'result', getattr(event, 'output', getattr(event, 'response', {})))
-            result_cache_key = f"result:{tool_name}:{hash(str(result)[:100])}"
             
-            # Check result cache first
-            cached_message = self.result_cache.get(result_cache_key)
-            if cached_message:
-                result_message = cached_message
-            else:
-                # Generate new result message and cache it
-                result_message = self._get_cached_result_message(tool_name)
-                self.result_cache.put(result_cache_key, result_message)
-            
-            # Ultra-fast log call with priority queuing
-            self.log_message(
-                "result",
-                result_message,
-                {"tool": tool_name, "phase": self.current_phase, "is_complete": True}
-            )
-            
-            # PERFORMANCE: Optimized phase completion check
-            self._check_phase_completion(tool_name)
+            # Only capture if this is the main orchestrator
+            if 'orchestrator' in agent_name.lower() or agent_name == 'LogisticsOrchestrator':
+                
+                # Send analysis immediately
+                raw_analysis = self.generate_result_analysis(result, tool_name)
+                if raw_analysis:
+                    self.log_message(
+                        "analysis",
+                        raw_analysis,
+                        {"tool": tool_name, "phase": self.current_phase}
+                    )
+                
+                # Send result immediately
+                user_friendly_result = self.extract_user_friendly_content(result, tool_name)
+                self.log_message(
+                    "result",
+                    user_friendly_result,
+                    {"tool": tool_name, "phase": self.current_phase, "is_complete": True}
+                )
+                
+                # Check if we should send phase completion
+                if self.current_phase == "planning" and len(self.tools_called) >= 2 and 'approval' not in self.tools_called:
+                    # Planning phase complete, has inventory and fleet but no approval yet
+                    self.send_phase_complete("planning")
+                elif self.current_phase == "approval" and 'approval' in tool_name:
+                    # Approval phase complete
+                    self.send_phase_complete("approval")
                     
         except Exception as e:
             print(f"🪝 Error in after_tool_call: {e}")
-    
-    @lru_cache(maxsize=16)
-    def _get_cached_result_message(self, tool_name: str) -> str:
-        """Pre-computed result messages with caching."""
-        if 'inventory' in tool_name:
-            return "✅ **Inventory Found**\n\n📦 Parts available in warehouse - checking delivery options..."
-        elif 'fleet' in tool_name:
-            return "🚛 **Delivery Scheduled**\n\n🤖 AGV assigned and route optimized - requesting approval..."
-        elif 'approval' in tool_name:
-            return "⚖️ **Request Approved**\n\n✅ Authorization granted - proceeding with order fulfillment..."
-        else:
-            return f"✅ **{tool_name} Complete**\n\nOperation completed successfully."
-    
-    def _check_phase_completion(self, tool_name: str):
-        """Optimized phase completion checking."""
-        if (self.current_phase == "planning" and 
-            len(self.tools_called) >= 2 and 
-            'approval' not in self.tools_called):
-            self.send_phase_complete("planning")
-        elif self.current_phase == "approval" and 'approval' in tool_name:
-            self.send_phase_complete("approval")
     
     def extract_user_friendly_content(self, result, tool_name):
         """Extract user-friendly content from tool results."""
@@ -476,54 +601,38 @@ class OrchestratorOnlyHook:
             return None
     
     def log_message(self, message_type: str, content: str, metadata: Dict = None):
-        """Log message using high-performance queue system with caching."""
-        start_time = time.time()
+        """Langfuse-enhanced message logging with UI updates."""
+        print(f"🔍 LOG: {message_type} - {content[:50]}...")
         
-        # Update performance metrics
-        self.performance_metrics['hook_calls'] += 1
+        timestamp = datetime.now()
         
-        # Create cache key for this message
-        cache_key = self._generate_message_cache_key(message_type, content, metadata)
+        # Create message for UI queue (keep original format for compatibility)
+        ui_message = {
+            "type": message_type,
+            "content": content,
+            "timestamp": timestamp.isoformat(),
+            "source": "orchestrator"
+        }
         
-        # Check cache first
-        cached_result = self.result_cache.get(cache_key)
-        if cached_result:
-            self.performance_metrics['cache_hits'] += 1
-            # Use cached JSON, just update timestamp
-            ui_message = json.loads(cached_result)
-            ui_message['timestamp'] = datetime.now().isoformat()
-            ui_json = json.dumps(ui_message)
-        else:
-            self.performance_metrics['cache_misses'] += 1
-            # Create new message
-            timestamp = datetime.now()
-            ui_message = {
-                "type": message_type,
-                "content": content,
-                "timestamp": timestamp.isoformat(),
-                "source": "orchestrator"
+        if metadata:
+            ui_message.update(metadata)
+        
+        # Send to UI queue
+        try:
+            self.queue.put(json.dumps(ui_message), block=False)
+        except:
+            pass  # Don't block if queue is full
+        
+        # Log to Langfuse for professional observability
+        self.tracer.log_agent_message(
+            agent_name="LogisticsOrchestrator",
+            message_type=message_type,
+            content=content,
+            metadata={
+                "orchestrator_phase": self.current_phase,
+                "tools_called": list(self.tools_called),
+                **(metadata or {})
             }
-            
-            if metadata:
-                ui_message.update(metadata)
-            
-            # Pre-serialize and cache
-            ui_json = json.dumps(ui_message)
-            self.result_cache.put(cache_key, ui_json)
-        
-        # PERFORMANCE: Use priority queue system for UI updates
-        priority = self._get_message_priority(message_type)
-        self.message_queue.put_priority(ui_json, priority)
-        
-        # PERFORMANCE: Async file logging to avoid I/O blocking
-        if self.log_to_file:
-            self._async_log_to_file(message_type, content, metadata)
-        
-        # Update performance metrics
-        processing_time = time.time() - start_time
-        self.performance_metrics['avg_processing_time'] = (
-            (self.performance_metrics['avg_processing_time'] * (self.performance_metrics['hook_calls'] - 1) + processing_time) / 
-            self.performance_metrics['hook_calls']
         )
     
     def on_agent_start(self, agent_name: str, query: str):
@@ -772,108 +881,6 @@ class OrchestratorOnlyHook:
         except Exception as e:
             print(f"🪝 Error sending phase completion: {e}")
     
-    def _flush_log_buffer(self):
-        """PERFORMANCE: Thread-safe flush of buffered log entries."""
-        with self._buffer_lock:
-            self._flush_log_buffer_unsafe()
-    
-    def _flush_log_buffer_unsafe(self):
-        """PERFORMANCE: Flush buffered log entries (not thread-safe, caller must hold lock)."""
-        if self._log_buffer and self.log_to_file:
-            try:
-                # Batch write all buffered entries
-                with open(self.log_file, 'a') as f:
-                    f.writelines(self._log_buffer)
-                self._log_buffer.clear()
-            except Exception as e:
-                print(f"🪝 Log buffer flush error: {e}")
-    
-    def _start_flush_timer(self):
-        """PERFORMANCE: Start periodic timer to flush log buffer."""
-        self._flush_timer = threading.Timer(2.0, self._periodic_flush)  # Flush every 2 seconds
-        self._flush_timer.daemon = True
-        self._flush_timer.start()
-    
-    def _periodic_flush(self):
-        """PERFORMANCE: Periodic flush of log buffer."""
-        try:
-            self._flush_log_buffer()
-            # Restart timer for next flush
-            if self.log_to_file:
-                self._start_flush_timer()
-        except Exception as e:
-            print(f"🪝 Periodic flush error: {e}")
-    
-    def __del__(self):
-        """PERFORMANCE: Ensure log buffer is flushed and timer is stopped on cleanup."""
-        try:
-            if hasattr(self, '_flush_timer') and self._flush_timer:
-                self._flush_timer.cancel()
-            if hasattr(self, '_log_buffer'):
-                self._flush_log_buffer()
-        except Exception:
-            pass
-    
-    def _generate_message_cache_key(self, message_type: str, content: str, metadata: Dict = None) -> str:
-        """Generate cache key for message deduplication."""
-        # Use first 50 chars of content to create cache key
-        content_hash = hash(content[:50] + message_type)
-        metadata_hash = hash(str(sorted(metadata.items())) if metadata else "")
-        return f"msg:{content_hash}:{metadata_hash}"
-    
-    def _get_message_priority(self, message_type: str) -> int:
-        """Get message priority for queue ordering (lower number = higher priority)."""
-        priority_map = {
-            'progress': 1,      # Immediate UI updates
-            'result': 1,        # Important results
-            'phase_header': 1,  # Critical phase transitions
-            'error': 0,         # Highest priority
-            'reasoning': 2,     # Medium priority
-            'analysis': 3,      # Lower priority
-            'observation': 4    # Lowest priority
-        }
-        return priority_map.get(message_type, 5)
-    
-    def _async_log_to_file(self, message_type: str, content: str, metadata: Dict = None):
-        """Asynchronously log to file without blocking execution."""
-        if not self.log_to_file:
-            return
-            
-        timestamp = datetime.now()
-        log_entry = f"[{timestamp.strftime('%H:%M:%S')}] {message_type.upper()}: {content}\n"
-        if metadata:
-            log_entry += f"  Metadata: {json.dumps(metadata, indent=2)}\n"
-        log_entry += "\n"
-        
-        # PERFORMANCE: Thread-safe log buffering
-        with self._buffer_lock:
-            self._log_buffer.append(log_entry)
-            
-            # Intelligent buffer flushing based on message priority
-            buffer_size_limit = 10 if self._get_message_priority(message_type) <= 1 else 30
-            if len(self._log_buffer) >= buffer_size_limit:
-                self._flush_log_buffer_unsafe()
-    
-    def get_performance_stats(self) -> Dict[str, Any]:
-        """Get current performance statistics."""
-        cache_stats = {
-            'cache_hit_rate': (self.performance_metrics['cache_hits'] / 
-                             max(1, self.performance_metrics['hook_calls'])) * 100,
-            'total_cache_hits': self.performance_metrics['cache_hits'],
-            'total_cache_misses': self.performance_metrics['cache_misses']
-        }
-        
-        connection_stats = self.connection_pool.get_connection_info()
-        
-        return {
-            'hook_performance': self.performance_metrics,
-            'cache_performance': cache_stats,
-            'connection_pool': connection_stats,
-            'message_queue_size': (self.message_queue.priority_queue.qsize() + 
-                                 len(self.message_queue.batch_queue)),
-            'log_buffer_size': len(self._log_buffer)
-        }
-    
     def generate_result_analysis(self, result, tool_name: str) -> str:
         """Generate AI analysis of tool execution results."""
         try:
@@ -929,71 +936,15 @@ class OrchestratorOnlyHook:
         except Exception as e:
             return None
 
-def create_orchestrator_hooks(queue: Queue, task_id: str, log_to_file: bool = True, 
-                            enable_performance_monitoring: bool = True) -> OrchestratorOnlyHook:
+def create_orchestrator_hooks(queue: Queue, task_id: str) -> OrchestratorOnlyHook:
     """
-    Factory function to create high-performance orchestrator hooks.
-    
-    Features:
-    - Async processing with priority queuing
-    - LRU result caching with TTL
-    - HTTP connection pooling
-    - Performance metrics and monitoring
-    - Optimized file I/O with buffering
+    Factory function to create Langfuse-enabled orchestrator hooks.
     
     Args:
         queue: Queue for streaming messages to UI
         task_id: Unique task identifier
-        log_to_file: Whether to log to file
-        enable_performance_monitoring: Whether to collect performance stats
         
     Returns:
-        High-performance OrchestratorOnlyHook instance
+        OrchestratorOnlyHook instance with Langfuse integration
     """
-    hook = OrchestratorOnlyHook(queue, task_id, log_to_file)
-    
-    if enable_performance_monitoring:
-        # Log initial performance configuration
-        print(f"🚀 High-Performance Hooks Initialized:")
-        print(f"   📊 Result Cache: 200 entries, 10min TTL")
-        print(f"   🔗 Connection Pool: 3 connections")
-        print(f"   📬 Priority Message Queue: Active")
-        print(f"   💾 Async Log Buffering: Every 2s")
-        print(f"   🎯 LRU Caching: Enabled")
-        
-        # Start performance monitoring
-        def log_performance_stats():
-            while True:
-                time.sleep(30)  # Log stats every 30 seconds
-                try:
-                    stats = hook.get_performance_stats()
-                    print(f"🔍 Performance: {stats['hook_performance']['hook_calls']} calls, "
-                          f"{stats['cache_performance']['cache_hit_rate']:.1f}% cache hit rate")
-                except Exception:
-                    pass
-        
-        monitor_thread = threading.Thread(target=log_performance_stats, daemon=True)
-        monitor_thread.start()
-    
-    return hook
-
-
-# PERFORMANCE: Pre-compile regex patterns and constants for faster execution
-AGENT_NAME_PATTERNS = {
-    'orchestrator': ['orchestrator', 'LogisticsOrchestrator']
-}
-
-TOOL_NAME_CACHE = {}
-PHASE_TRANSITION_CACHE = {}
-MESSAGE_TEMPLATE_CACHE = {}
-
-def clear_performance_caches():
-    """Clear all performance caches - useful for testing or memory management."""
-    global TOOL_NAME_CACHE, PHASE_TRANSITION_CACHE, MESSAGE_TEMPLATE_CACHE
-    TOOL_NAME_CACHE.clear()
-    PHASE_TRANSITION_CACHE.clear()
-    MESSAGE_TEMPLATE_CACHE.clear()
-    
-    # Clear function caches
-    create_orchestrator_hooks.__wrapped__
-    print("🧹 Performance caches cleared")
+    return OrchestratorOnlyHook(queue, task_id)
