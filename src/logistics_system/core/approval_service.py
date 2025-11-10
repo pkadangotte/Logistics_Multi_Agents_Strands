@@ -24,8 +24,8 @@ except ImportError:
 
 # Configuration loader import
 import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent.parent))
 from config.config_loader import get_approver_config, get_system_config
 
 logging.basicConfig(level=logging.INFO)
@@ -73,23 +73,23 @@ class ApprovalService:
     """
     
     def __init__(self, llm_model: str = None):
-        # Load configuration from central config system with .env overrides
+        # Load configuration from central config system only
         system_config = get_system_config()
         ai_config = system_config.get('system_settings', {}).get('ai_config', {})
         
-        # Environment variables override central config
-        llm_backend = os.getenv('LLM_BACKEND', 'ollama').lower()
-        self.llm_model = llm_model or os.getenv('OLLAMA_MODEL', ai_config.get('default_model', 'qwen2.5:7b'))
+        # All configuration from central config
+        llm_backend = ai_config.get('llm_backend', 'ollama').lower()
+        self.llm_model = llm_model or ai_config.get('default_model', 'qwen2.5:7b')
         self.llm_enabled = LLM_AVAILABLE and (llm_backend == 'ollama')
         
-        # Get Ollama URL from env first, then central config
-        ollama_base_url = os.getenv('OLLAMA_BASE_URL', ai_config.get('ollama_url', 'http://localhost:11434/api/generate'))
-        self.ollama_url = ollama_base_url if ollama_base_url.endswith('/api/generate') else f"{ollama_base_url}/api/generate"
+        # Get Ollama URL from central config
+        ollama_base_url = ai_config.get('ollama_base_url', 'http://localhost:11434')
+        self.ollama_url = ai_config.get('ollama_url', f"{ollama_base_url}/api/generate")
         
-        # AI parameters from env with central config fallbacks
-        self.temperature = float(os.getenv('OLLAMA_TEMPERATURE', str(ai_config.get('temperature', 0.1))))
-        self.num_predict = int(os.getenv('OLLAMA_NUM_PREDICT', '250'))
-        self.timeout = int(os.getenv('OLLAMA_TIMEOUT', str(ai_config.get('timeout_seconds', 60))))
+        # AI parameters from central config
+        self.temperature = float(ai_config.get('temperature', 0.1))
+        self.num_predict = int(ai_config.get('num_predict', 250))
+        self.timeout = int(ai_config.get('timeout_seconds', 60))
         
         # Test LLM connection
         if self.llm_enabled and llm_backend == 'ollama':

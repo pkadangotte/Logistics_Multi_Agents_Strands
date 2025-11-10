@@ -1,27 +1,39 @@
 """
-Simple Application Configuration
+Application Configuration - Central Config System
 """
+import sys
 import os
 from enum import Enum
+from pathlib import Path
+
+# Add config path for imports
+sys.path.append(str(Path(__file__).parent))
+from config.config_loader import get_system_config
 
 class LLMBackend(Enum):
     OLLAMA = "ollama"
     BEDROCK = "bedrock"
 
 class Config:
-    """Simple application configuration class"""
+    """Application configuration class using central config system"""
     
     def __init__(self):
-        # LLM Backend configuration
-        llm_backend_str = os.getenv('LLM_BACKEND', 'ollama').lower()
+        # Load from central configuration
+        system_config = get_system_config()
+        
+        # Server configuration
+        server_config = system_config.get('system_settings', {}).get('server_config', {})
+        self.flask_host = server_config.get('host', '127.0.0.1')
+        self.flask_port = server_config.get('port', 5555)
+        self.flask_debug = server_config.get('debug_mode', False)
+        
+        # AI/LLM Backend configuration
+        ai_config = system_config.get('system_settings', {}).get('ai_config', {})
+        llm_backend_str = ai_config.get('llm_backend', 'ollama').lower()
         self.llm_backend = LLMBackend.OLLAMA if llm_backend_str == 'ollama' else LLMBackend.BEDROCK
         
-        # Flask server configuration
-        self.flask_host = os.getenv('FLASK_HOST', '127.0.0.1')
-        self.flask_port = int(os.getenv('FLASK_PORT', 5555))
-        self.flask_debug = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
-        
         # Strands observability features
-        self.enable_strands_observability = os.getenv('ENABLE_STRANDS_OBSERVABILITY', 'True').lower() == 'true'
-        self.enable_strands_metrics = os.getenv('ENABLE_STRANDS_METRICS', 'True').lower() == 'true'
-        self.enable_agent_streaming = os.getenv('ENABLE_AGENT_STREAMING', 'True').lower() == 'true'
+        strands_config = system_config.get('system_settings', {}).get('strands_config', {})
+        self.enable_strands_observability = strands_config.get('enable_observability', True)
+        self.enable_strands_metrics = strands_config.get('enable_metrics', True)
+        self.enable_agent_streaming = strands_config.get('enable_agent_streaming', True)

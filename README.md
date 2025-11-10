@@ -254,12 +254,58 @@ Try different parts to see varying inventory levels:
 ### � **Adding New Parts**
 Edit `Agents/InventoryAgent.py` to add new parts to the inventory:
 ```python
+## 🛠️ Central Configuration System
+
+### 🎛️ **System Configuration**
+All system settings are managed through **JSON configuration files** in the `config/` directory:
+
+**`config/system_config.json`** - Main system settings:
+```json
+{
+  "system_settings": {
+    "ai_config": {
+      "llm_backend": "ollama",
+      "default_model": "qwen2.5:7b",
+      "temperature": 0.1,
+      "timeout_seconds": 30
+    },
+    "server_config": {
+      "host": "127.0.0.1", 
+      "port": 5555
+    }
+  }
+}
+```
+
+### 📦 **Adding New Parts**
+Edit `config/inventory_config.json` to add new parts:
+```json
 "YOUR-NEW-PART": {
+    "description": "New Part Description",
     "available_quantity": 150,
     "warehouse_location": "Central Warehouse", 
     "unit_cost": 45.00,
     "reorder_point": 25
 }
+```
+
+### 🚛 **Adding AGVs**
+Modify `config/fleet_config.json` to expand the fleet:
+```json
+"AGV-005": {
+    "agv_id": "AGV-005",
+    "type": "heavy_duty_agv",
+    "capacity_pieces": 75,
+    "status": "AVAILABLE", 
+    "battery_level": 90
+}
+```
+
+### 🏭 **Adding Destinations**
+Update delivery locations in `config/fleet_config.json`:
+```json
+"New Production Line": {
+    "name": "Production Line C",
 ```
 
 ### 🚛 **Adding AGVs**

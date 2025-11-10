@@ -7,13 +7,21 @@
             "auto_reload": true
         },
         "ai_config": {
+            "llm_backend": "ollama",
+            "ollama_base_url": "http://localhost:11434",
             "ollama_url": "http://localhost:11434/api/generate",
             "default_model": "qwen2.5:7b",
             "temperature": 0.1,
+            "top_p": 0.9,
             "timeout_seconds": 30,
             "num_predict": 256,
             "num_ctx": 2048,
             "fallback_to_rules": true
+        },
+        "strands_config": {
+            "enable_observability": true,
+            "enable_metrics": true,
+            "enable_agent_streaming": true
         },
         "workflow_settings": {
             "max_concurrent_requests": 10,

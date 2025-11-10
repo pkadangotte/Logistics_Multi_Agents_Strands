@@ -136,6 +136,7 @@
 **PRIORITY IMPROVEMENTS** (Target: 70% reduction in response time):
 1. **Immediate (P0)**:
    - ✅ Verify services use optimized timeout/token settings from central config
+   - ✅ **Unified Central Config**: Removed .env dependency for simpler management
    - ⚠️ Implement agent response caching for repeated queries
    - ⚠️ Add connection pooling for Ollama API calls
    
@@ -155,7 +156,8 @@
 - Success rate: >95% within timeout limits
 
 **Configuration Optimization Applied**:
-- ✅ Central config system with hierarchical overrides (.env → system_config.json)
+- ✅ Unified central config system (system_config.json only)
+- ✅ Removed .env dependency - single source of truth
 - ✅ Model: qwen2.5:7b (user preference maintained)
 - ✅ Temperature: 0.1, Tokens: 256, Timeout: 30s
 - ✅ Optimized context window: 2048 tokens
