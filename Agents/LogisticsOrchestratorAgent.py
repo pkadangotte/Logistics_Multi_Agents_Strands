@@ -45,7 +45,7 @@ def create_logistics_orchestrator_agent(use_local_model: bool = True, hooks=None
                 model_id="qwen2.5:7b",
                 keep_alive=300  # Keep model alive for 5 minutes
             )
-            logger.info("🦙 Orchestrator using OllamaModel: qwen2.5:7b")
+
         except Exception as e:
             logger.error(f"❌ Failed to initialize OllamaModel: {e}")
             raise
@@ -71,7 +71,7 @@ def create_logistics_orchestrator_agent(use_local_model: bool = True, hooks=None
             Inventory analysis and availability information
         """
         try:
-            logger.info(f"🔧 Inventory tool called with query: {query}")
+
             
             # Create inventory agent with its own LLM
             inventory_agent = create_inventory_agent(use_local_model=True)
@@ -79,7 +79,7 @@ def create_logistics_orchestrator_agent(use_local_model: bool = True, hooks=None
             # Call the inventory agent
             result = inventory_agent(query)
             
-            logger.info(f"📦 Inventory agent result: {str(result)[:100]}...")
+
             return str(result)
             
         except Exception as e:
@@ -99,7 +99,7 @@ def create_logistics_orchestrator_agent(use_local_model: bool = True, hooks=None
             Fleet coordination results including AGV assignment and delivery schedule
         """
         try:
-            logger.info(f"🚛 Fleet tool called with query: {query}")
+
             
             # Create fleet agent with its own LLM
             fleet_agent = create_fleet_agent(use_local_model=True)
@@ -107,7 +107,7 @@ def create_logistics_orchestrator_agent(use_local_model: bool = True, hooks=None
             # Call the fleet agent
             result = fleet_agent(query)
             
-            logger.info(f"🚛 Fleet agent result: {str(result)[:100]}...")
+
             return str(result)
             
         except Exception as e:
@@ -127,7 +127,7 @@ def create_logistics_orchestrator_agent(use_local_model: bool = True, hooks=None
             Approval decision with reasoning and authorization details
         """
         try:
-            logger.info(f"⚖️ Approval tool called with query: {query}")
+
             
             # Create approval agent with its own LLM
             approval_agent = create_approver_agent(use_local_model=True)
@@ -135,7 +135,7 @@ def create_logistics_orchestrator_agent(use_local_model: bool = True, hooks=None
             # Call the approval agent
             result = approval_agent(query)
             
-            logger.info(f"⚖️ Approval agent result: {str(result)[:100]}...")
+
             return str(result)
             
         except Exception as e:

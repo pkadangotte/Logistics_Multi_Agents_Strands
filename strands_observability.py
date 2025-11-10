@@ -438,10 +438,7 @@ if __name__ == "__main__":
     observability_capture.capture_tool_call("inventory_agent", "check_stock", {"part": "ABC123"}, {"available": 50}, 1)
     observability_capture.capture_agent_communication("orchestrator", "inventory_agent", "Check stock for ABC123", {"available": 50}, 1)
     
-    # Print results
-    print("📊 Real Observability Messages:")
-    for msg in observability_capture.get_messages_for_ui():
-        print(f"  {msg['timestamp']} [{msg['agent']}] {msg['message']}")
+
 
 
 # ============================================================================
@@ -462,18 +459,18 @@ class ObservabilityHookProvider:
             
             # Register before tool call hook
             registry.add_callback(BeforeToolCallEvent, self.before_tool_call)
-            logger.info("🪝 DEBUG: Registered BeforeToolCallEvent handler")
+
             
             # Register after tool call hook  
             registry.add_callback(AfterToolCallEvent, self.after_tool_call)
-            logger.info("🪝 DEBUG: Registered AfterToolCallEvent handler")
+
             
             # Register after model call hook
             registry.add_callback(AfterModelCallEvent, self.after_model_call)
-            logger.info("🪝 DEBUG: Registered AfterModelCallEvent handler")
+
             
         except Exception as e:
-            logger.error(f"🪝 DEBUG: Error registering hooks: {e}")
+            logger.error(f"🪝 Error registering hooks: {e}")
             import traceback
             traceback.print_exc()
             import traceback
@@ -482,12 +479,12 @@ class ObservabilityHookProvider:
     def before_tool_call(self, event):
         """Hook: Before tool call - capture the intent."""
         try:
-            logger.info(f"🪝 DEBUG: BEFORE_TOOL_CALL triggered!")
+
             agent_name = getattr(event.agent, 'name', 'Unknown Agent')
             tool_name = event.tool_name
             args = event.arguments
             
-            logger.info(f"🪝 DEBUG: Agent: {agent_name}, Tool: {tool_name}")
+
             
             message = f"🔧 About to call {tool_name}"
             if args:
@@ -501,22 +498,22 @@ class ObservabilityHookProvider:
                 level='INFO'
             )
             
-            logger.info(f"🪝 DEBUG: BEFORE_TOOL_CALL message captured: {message}")
+
             
         except Exception as e:
-            logger.error(f"🪝 DEBUG: Error in before_tool_call hook: {e}")
+            logger.error(f"🪝 Error in before_tool_call hook: {e}")
             import traceback
             traceback.print_exc()
     
     def after_tool_call(self, event):
         """Hook: After tool call - capture the result."""
         try:
-            logger.info(f"🪝 DEBUG: AFTER_TOOL_CALL triggered!")
+
             agent_name = getattr(event.agent, 'name', 'Unknown Agent')
             tool_name = event.tool_name
             result = event.result
             
-            logger.info(f"🪝 DEBUG: Agent: {agent_name}, Tool: {tool_name}, Result type: {type(result)}")
+
             
             # Capture full tool call details
             self.observability_capture.capture_tool_call(
@@ -526,17 +523,17 @@ class ObservabilityHookProvider:
                 result=result
             )
             
-            logger.info(f"🪝 DEBUG: AFTER_TOOL_CALL captured tool call for {tool_name}")
+
             
         except Exception as e:
-            logger.error(f"🪝 DEBUG: Error in after_tool_call hook: {e}")
+            logger.error(f"🪝 Error in after_tool_call hook: {e}")
             import traceback
             traceback.print_exc()
     
     def after_model_call(self, event):
         """Hook: After model call - capture model responses."""
         try:
-            logger.info(f"🪝 DEBUG: AFTER_MODEL_CALL triggered!")
+
             agent_name = getattr(event.agent, 'name', 'Unknown Agent')
             
             # Extract response content if available
@@ -545,7 +542,7 @@ class ObservabilityHookProvider:
                 response_text = str(event.result)
                 response_preview = response_text[:150] + "..." if len(response_text) > 150 else response_text
             
-            logger.info(f"🪝 DEBUG: Model call from {agent_name}: {response_preview[:50]}...")
+
             
             self.observability_capture.capture_log_message(
                 agent_name=agent_name,
@@ -553,10 +550,10 @@ class ObservabilityHookProvider:
                 level='INFO'
             )
             
-            logger.info(f"🪝 DEBUG: AFTER_MODEL_CALL captured model response")
+
             
         except Exception as e:
-            logger.error(f"🪝 DEBUG: Error in after_model_call hook: {e}")
+            logger.error(f"🪝 Error in after_model_call hook: {e}")
             import traceback
             traceback.print_exc()
 

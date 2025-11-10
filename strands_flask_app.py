@@ -21,7 +21,7 @@ def real_orchestrator_agent(request_data: dict, queue: Queue, task_id: str):
     Shows ONLY orchestrator-level messages, not sub-agent details.
     """
     try:
-        print(f"🚀 Real orchestrator started for request: {request_data}")
+
         
         # Import the hooks
         from orchestrator_hooks import create_orchestrator_hooks
@@ -58,19 +58,12 @@ def real_orchestrator_agent(request_data: dict, queue: Queue, task_id: str):
         # Run the orchestrator - this will trigger all the hooks automatically
         result = orchestrator(query)
         
-        # Debug: Check result length and type
+        # Final completion message
         result_str = str(result)
-        print(f"🔍 DEBUG: Result type: {type(result)}, Length: {len(result_str)}")
-        print(f"🔍 DEBUG: First 100 chars: {result_str[:100]}")
-        print(f"🔍 DEBUG: Last 100 chars: {result_str[-100:]}")
-        
-        # Final completion message - show FULL result
         hooks.log_message(
             "final_answer",
             f"✅ Orchestrator completed:\n\n{result_str}"
         )
-        
-        print(f"🏁 Real orchestrator completed. Log saved to: {hooks.log_file if hooks.log_to_file else 'No file logging'}")
         
     except Exception as e:
         print(f"❌ Orchestrator error: {e}")

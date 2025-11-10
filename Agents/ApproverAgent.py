@@ -1004,7 +1004,7 @@ async def process_approval_request(query: str) -> str:
         # Determine priority from context
         priority = "HIGH" if "urgent" in query.lower() or "critical" in query.lower() else "MEDIUM"
         
-        logger.info(f"⚖️ Parsed: {part_number}, qty:{quantity}, cost:${estimated_cost}, priority:{priority}")
+
         
         # Create a simple approval decision based on business rules
         # Check cost limits (simple rule: approve if under $10,000)
@@ -1119,11 +1119,9 @@ Provide clear reasoning for your approval decisions and recommendations."""
                 model_id="qwen2.5:7b",
                 keep_alive=300  # Keep model alive for 5 minutes to reduce loading time
             )
-            logger.info("🦙 Using OllamaModel with optimized settings")
+
         except ImportError:
             logger.warning("⚠️  OllamaModel not available, using default model")
-    else:
-        logger.info("🌐 Using default Strands model (may require AWS credentials)")
 
     return Agent(**agent_kwargs)
 

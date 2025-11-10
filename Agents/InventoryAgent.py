@@ -765,11 +765,9 @@ Prioritize preventing stockouts while minimizing carrying costs."""
                 model_id="qwen2.5:7b",
                 keep_alive=300
             )
-            logger.info("🦙 Using OllamaModel for inventory operations")
+
         except ImportError:
             logger.warning("⚠️  OllamaModel not available, using default model")
-    else:
-        logger.info("🌐 Using default Strands model for inventory operations")
 
     return Agent(**agent_kwargs)
 

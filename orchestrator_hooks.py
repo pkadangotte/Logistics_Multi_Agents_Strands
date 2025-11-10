@@ -57,7 +57,7 @@ class OrchestratorOnlyHook:
             registry.add_callback(AfterToolCallEvent, self.after_tool_call)
             registry.add_callback(AfterModelCallEvent, self.after_model_call)
             
-            print(f"🪝 Registered orchestrator hooks for task {self.task_id[:8]}")
+
             
         except Exception as e:
             print(f"🪝 Hook registration error: {e}")
@@ -281,7 +281,7 @@ class OrchestratorOnlyHook:
                         
             return None
         except Exception as e:
-            print(f"🔍 Error extracting LLM reasoning: {e}")
+
             return None
     
     def log_message(self, message_type: str, content: str, metadata: Dict = None):
@@ -299,7 +299,7 @@ class OrchestratorOnlyHook:
         if metadata:
             ui_message.update(metadata)
         
-        print(f"🔍 QUEUE: Putting message type {message_type} (length: {len(content)})")
+
         
         # Send to UI queue
         self.queue.put(json.dumps(ui_message))
