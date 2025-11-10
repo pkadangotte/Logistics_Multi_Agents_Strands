@@ -90,22 +90,22 @@ class FleetService:
             fleet_config = get_fleet_config()
             system_config = get_system_config()
             
-            # Load AGV fleet data
+            # Load AGV fleet data from agv_fleet (dictionary with agv_id as keys)
             self.agv_fleet = {}
-            agv_data = fleet_config.get('agv_fleet', [])
+            agv_fleet_data = fleet_config.get('agv_fleet', {})
             
-            for agv in agv_data:
-                agv_id = agv.get('agv_id', 'UNKNOWN')
+            for agv_id, agv_data in agv_fleet_data.items():
                 self.agv_fleet[agv_id] = {
                     "agv_id": agv_id,
-                    "type": agv.get('type', 'Standard AGV'),
-                    "capacity_kg": agv.get('capacity_kg', 100),
-                    "battery_level": agv.get('battery_level', 100),
-                    "current_location": agv.get('current_location', 'Dock-01'),
-                    "status": agv.get('status', 'available'),
-                    "max_speed_mps": agv.get('max_speed_mps', 2.0),
-                    "charging_time_minutes": agv.get('charging_time_minutes', 60),
-                    "maintenance_due": agv.get('maintenance_due', False),
+                    "type": agv_data.get('type', 'Standard AGV'),
+                    "capacity_kg": agv_data.get('capacity_pieces', 100),  # Note: config uses 'capacity_pieces'
+                    "battery_level": agv_data.get('battery_level', 100),
+                    "current_location": agv_data.get('current_location', 'Dock-01'),
+                    "status": agv_data.get('status', 'AVAILABLE').lower(),
+                    "max_speed_mps": agv_data.get('max_speed_mps', 2.0),
+                    "charging_time_minutes": agv_data.get('charging_time_minutes', 60),
+                    "maintenance_due": agv_data.get('maintenance_due', False),
+                    "cost_per_trip": agv_data.get('cost_per_trip', 5.0),
                     "current_task": None,
                     "estimated_completion": None,
                     "last_updated": datetime.now().isoformat()

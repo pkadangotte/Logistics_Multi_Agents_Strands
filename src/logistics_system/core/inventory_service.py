@@ -78,40 +78,40 @@ class InventoryService:
         try:
             inventory_config = get_inventory_config()
             
-            # Load parts data
+            # Load parts data from parts_catalog (dictionary with part_number as keys)
             self.parts_inventory = {}
-            parts_data = inventory_config.get('parts', [])
+            parts_catalog = inventory_config.get('parts_catalog', {})
             
-            for part in parts_data:
-                part_number = part.get('part_number', 'UNKNOWN')
+            for part_number, part_data in parts_catalog.items():
                 self.parts_inventory[part_number] = {
-                    "name": part.get('name', 'Unknown Part'),
-                    "current_stock": part.get('current_stock', 0),
-                    "reserved_quantity": part.get('reserved_quantity', 0),
-                    "available_quantity": part.get('current_stock', 0) - part.get('reserved_quantity', 0),
-                    "minimum_stock": part.get('minimum_stock', 10),
-                    "maximum_stock": part.get('maximum_stock', 100),
-                    "location": part.get('location', 'Unknown Location'),
-                    "cost_per_unit": part.get('cost_per_unit', 100.0),
-                    "supplier": part.get('supplier', 'Unknown Supplier'),
-                    "lead_time_days": part.get('lead_time_days', 7),
+                    "name": part_data.get('description', f'Part {part_number}'),
+                    "current_stock": part_data.get('available_quantity', 0) + part_data.get('reserved_quantity', 0),
+                    "reserved_quantity": part_data.get('reserved_quantity', 0),
+                    "available_quantity": part_data.get('available_quantity', 0),
+                    "minimum_stock": part_data.get('reorder_point', 10),
+                    "maximum_stock": part_data.get('maximum_stock', 100),
+                    "location": part_data.get('warehouse_location', 'Unknown Location'),
+                    "cost_per_unit": part_data.get('cost_per_unit', 100.0),
+                    "supplier": part_data.get('supplier', 'Unknown Supplier'),
+                    "lead_time_days": part_data.get('lead_time_days', 7),
                     "last_updated": datetime.now().isoformat()
                 }
             
-            # Load demand history
+            # Load demand history from demand_history (dictionary with part_number as keys)
             self.demand_history = {}
-            demand_data = inventory_config.get('demand_history', [])
+            demand_history_data = inventory_config.get('demand_history', {})
             
-            for demand in demand_data:
-                part_number = demand.get('part_number', 'UNKNOWN')
-                if part_number not in self.demand_history:
-                    self.demand_history[part_number] = []
+            for part_number, demand_list in demand_history_data.items():
+                self.demand_history[part_number] = []
                 
-                self.demand_history[part_number].append({
-                    "date": demand.get('date', datetime.now().isoformat()),
-                    "quantity": demand.get('quantity', 0),
-                    "reason": demand.get('reason', 'Unknown')
-                })
+                for demand in demand_list:
+                    self.demand_history[part_number].append({
+                        "date": demand.get('date', datetime.now().isoformat()),
+                        "quantity": demand.get('quantity', 0),
+                        "priority": demand.get('priority', 'MEDIUM'),
+                        "reason": demand.get('reason', 'Historical demand'),
+                        "machine": demand.get('machine', 'Unknown')
+                    })
             
             logger.info(f"📋 Loaded inventory config: {len(self.parts_inventory)} parts, {len(self.demand_history)} demand histories")
             
