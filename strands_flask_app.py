@@ -2,9 +2,14 @@ import time
 import json
 import uuid
 import threading
+import os
 from queue import Queue
 from flask import Flask, Response, request, jsonify, render_template_string
 from datetime import datetime
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Import our existing agent
 from Agents.LogisticsOrchestratorAgent import create_logistics_orchestrator_agent

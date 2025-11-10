@@ -52,15 +52,23 @@ class FleetService:
     """
     
     def __init__(self, llm_model: str = None):
-        # Load configuration from .env file
-        import os
+        # Load configuration from central config system with .env overrides
+        system_config = get_system_config()
+        ai_config = system_config.get('system_settings', {}).get('ai_config', {})
+        
+        # Environment variables override central config
         llm_backend = os.getenv('LLM_BACKEND', 'ollama').lower()
-        self.llm_model = llm_model or os.getenv('OLLAMA_MODEL', 'qwen2.5:7b')
+        self.llm_model = llm_model or os.getenv('OLLAMA_MODEL', ai_config.get('default_model', 'qwen2.5:7b'))
         self.llm_enabled = LLM_AVAILABLE and (llm_backend == 'ollama')
         
-        # Get Ollama URL from .env with fallback
-        ollama_base_url = os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434')
-        self.ollama_url = f"{ollama_base_url}/api/generate" if not ollama_base_url.endswith('/api/generate') else ollama_base_url
+        # Get Ollama URL from env first, then central config
+        ollama_base_url = os.getenv('OLLAMA_BASE_URL', ai_config.get('ollama_url', 'http://localhost:11434/api/generate'))
+        self.ollama_url = ollama_base_url if ollama_base_url.endswith('/api/generate') else f"{ollama_base_url}/api/generate"
+        
+        # AI parameters from env with central config fallbacks
+        self.temperature = float(os.getenv('OLLAMA_TEMPERATURE', str(ai_config.get('temperature', 0.1))))
+        self.num_predict = int(os.getenv('OLLAMA_NUM_PREDICT', '200'))
+        self.timeout = int(os.getenv('OLLAMA_TIMEOUT', str(ai_config.get('timeout_seconds', 60))))
         
         # Test LLM connection
         if self.llm_enabled and llm_backend == 'ollama':
@@ -190,11 +198,11 @@ Provide clear recommendations with reasoning, cost analysis, and timing consider
                     "prompt": full_prompt,
                     "stream": False,
                     "options": {
-                        "temperature": 0.1,
-                        "num_predict": 200
+                        "temperature": self.temperature,
+                        "num_predict": self.num_predict
                     }
                 },
-                timeout=120
+                timeout=self.timeout
             )
             
             if response.status_code == 200:

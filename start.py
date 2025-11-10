@@ -26,8 +26,8 @@ def find_flask_processes():
         try:
             if proc.info['cmdline']:
                 cmdline = ' '.join(proc.info['cmdline'])
-                # Look for either flask run or flask_app.py patterns
-                if ('flask run' in cmdline and 'flask_app.py' in cmdline) or 'flask_app.py' in cmdline:
+                # Look for either flask run or strands_flask_app.py patterns
+                if ('flask run' in cmdline and 'strands_flask_app.py' in cmdline) or 'strands_flask_app.py' in cmdline:
                     processes.append(proc)
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             continue
@@ -54,7 +54,7 @@ def start_server():
     # Get the current directory and python path
     current_dir = Path(__file__).parent
     venv_python = current_dir / ".venv" / "bin" / "python"
-    flask_app = current_dir / "flask_app.py"
+    flask_app = current_dir / "strands_flask_app.py"
     
     # Check if virtual environment exists
     if not venv_python.exists():
@@ -63,7 +63,7 @@ def start_server():
         print("   Please run: python -m venv .venv")
         return False
     
-    # Check if flask_app.py exists
+    # Check if strands_flask_app.py exists
     if not flask_app.exists():
         print("❌ Flask app not found!")
         print(f"   Expected: {flask_app}")
@@ -100,7 +100,7 @@ def start_server():
         # Start the process in the background with proper detachment
         log_file = open('server.log', 'w')
         env = os.environ.copy()
-        env['FLASK_APP'] = 'flask_app.py'
+        env['FLASK_APP'] = 'strands_flask_app.py'
         process = subprocess.Popen(
             [str(venv_flask), "run", f"--host={host}", f"--port={port}"],
             stdout=log_file,
@@ -123,7 +123,7 @@ def start_server():
             print("\n🔧 Management:")
             print("   • Stop server: python stop.py")
             print("   • View logs:   tail -f server.log")
-            print("   • Check status: ps aux | grep flask_app")
+            print("   • Check status: ps aux | grep strands_flask_app")
             print(f"   • Server PID file: {process.pid}")
             
             # Write PID to file for easier management

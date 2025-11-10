@@ -27,7 +27,7 @@
 pip install -r requirements.txt
 
 # Launch the multi-agent system
-python3 flask_app.py
+python3 strands_flask_app.py
 ```
 
 ### Access the Web Interface
@@ -180,7 +180,7 @@ cd Logistics_Multi_Agents_Strands
 pip install -r requirements.txt
 
 # Start the system
-python3 flask_app.py
+python3 strands_flask_app.py
 ```
 
 ## 🧪 Testing Scenarios
@@ -310,7 +310,7 @@ Update delivery locations in `Agents/FleetAgent.py`:
 lsof -i :5555
 
 # Kill any existing Flask processes  
-pkill -f flask_app.py
+pkill -f strands_flask_app.py
 
 # Try starting again
 python start.py
@@ -345,7 +345,7 @@ python --version
 tail -f server.log
 
 # Direct run for detailed output
-python flask_app.py
+python strands_flask_app.py
 ```
 
 **Test Individual Components:**
@@ -396,7 +396,7 @@ cat INVENTORY_PARTS_REFERENCE.md
 lsof -i :5555
 
 # Kill conflicting processes
-pkill -f flask_app.py
+pkill -f strands_flask_app.py
 
 # Try starting again
 python start.py
@@ -408,7 +408,7 @@ python start.py
 sudo python stop.py
 
 # Manual cleanup
-pkill -9 -f flask_app.py
+pkill -9 -f strands_flask_app.py
 rm -f .server.pid
 ```
 
@@ -508,7 +508,7 @@ pip install -r requirements.txt
 ### 🛠️ **Development Mode**
 ```bash
 # Run with debug output
-python flask_app.py
+python strands_flask_app.py
 
 # Watch for file changes
 # (Note: Debug mode disabled in production for stability)
@@ -516,7 +516,7 @@ python flask_app.py
 
 ### 📈 **Performance Tuning**
 - Adjust polling intervals in `templates/index.html`
-- Modify AGV timing in `flask_app.py`
+- Modify AGV timing in `strands_flask_app.py`
 - Optimize agent response times in `Agents/` files
 
 ---
@@ -569,8 +569,8 @@ This system demonstrates **professional-grade multi-agent architecture** with th
 
 **Port already in use:**
 ```bash
-pkill -f flask_app.py  # Kill existing processes
-python3 flask_app.py   # Restart server
+pkill -f strands_flask_app.py  # Kill existing processes
+python3 strands_flask_app.py   # Restart server
 ```
 
 **Web interface not loading:**
@@ -598,7 +598,7 @@ cd Logistics_Multi_Agents_Strands
 pip install -r requirements.txt
 
 # 2. Launch the system
-python3 flask_app.py
+python3 strands_flask_app.py
 
 # 3. Open your browser
 # → Navigate to http://localhost:5555

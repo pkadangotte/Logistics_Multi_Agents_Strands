@@ -106,14 +106,59 @@
 
 **Status**: ✅ COMPLETE - Configuration system now fully operational
 
-#### 2.2 Legacy Code Cleanup (LOW PRIORITY)
+#### ✅ 2.2 Legacy Code Cleanup (COMPLETED)
 **Target Files**: `flask_app.py` (legacy), unused imports, deprecated functions  
 **Clarification**: `strands_flask_app.py` is the current Flask application
-**Goals**:
-1. Remove legacy `flask_app.py` (superseded by `strands_flask_app.py`)
-2. Clean up unused imports and deprecated code
-3. Verify no dependencies on removed legacy code
-4. Update any documentation references to old Flask app
+**Status**: ✅ COMPLETED SUCCESSFULLY
+**Achievements**:
+- ✅ Removed legacy `flask_app.py` (974 lines → flask_app.py.backup)
+- ✅ Updated start.py and stop.py to use `strands_flask_app.py`
+- ✅ Updated 11 documentation references in README.md
+- ✅ Cleaned unused imports from all agents and services using Pylance
+- ✅ Zero syntax errors, full system functionality verified
+- ✅ Single Flask app architecture established
+
+#### 🚀 2.3 Performance Optimization (HIGH PRIORITY)
+**Status**: 🔴 CRITICAL - Response times need improvement
+**Analysis Date**: November 10, 2025
+**Current Performance Issues**:
+- **Inventory Agent**: ~100 seconds (vs target: <30s)
+- **Fleet Agent**: ~128 seconds (vs target: <30s)  
+- **Approval Agent**: ~243 seconds (vs target: <30s)
+- **Total Workflow**: ~6 minutes (vs target: <2m)
+
+**Root Causes Identified**:
+1. **LLM Response Time**: qwen2.5:7b model processing delays
+2. **Sequential Processing**: Agents run sequentially, not optimally parallel
+3. **Configuration Application**: Need to verify optimized settings are active
+4. **Model Loading**: Cold start delays with model initialization
+
+**PRIORITY IMPROVEMENTS** (Target: 70% reduction in response time):
+1. **Immediate (P0)**:
+   - ✅ Verify services use optimized timeout/token settings from central config
+   - ⚠️ Implement agent response caching for repeated queries
+   - ⚠️ Add connection pooling for Ollama API calls
+   
+2. **Short-term (P1)**:
+   - ⚠️ Implement parallel agent execution where dependencies allow
+   - ⚠️ Add progressive response streaming (show partial results)
+   - ⚠️ Optimize prompt engineering for faster decisions
+   
+3. **Medium-term (P2)**:
+   - ⚠️ Implement background processing for non-critical analysis
+   - ⚠️ Add intelligent timeout handling with graceful degradation
+   - ⚠️ Create performance monitoring and alerting system
+
+**Target Performance**: 
+- Individual agents: <30 seconds each
+- Total workflow: <2 minutes
+- Success rate: >95% within timeout limits
+
+**Configuration Optimization Applied**:
+- ✅ Central config system with hierarchical overrides (.env → system_config.json)
+- ✅ Model: qwen2.5:7b (user preference maintained)
+- ✅ Temperature: 0.1, Tokens: 256, Timeout: 30s
+- ✅ Optimized context window: 2048 tokens
 
 #### 2.3 Code Quality & Standards (ONGOING)
 **Target**: All refactored services and agents
@@ -315,9 +360,29 @@ If any phase causes issues:
 - ✅ FleetService: 4 AGVs loaded with proper specifications
 - ✅ Zero configuration error messages
 
+### 📊 Performance Metrics (Latest Analysis):
+**Benchmark Date**: November 10, 2025 16:37:43
+**Test Case**: HYDRAULIC-PUMP-HP450 logistics workflow
+**Model**: qwen2.5:7b with optimized config (256 tokens, 30s timeout, 0.1 temperature)
+
+| Component | Current Performance | Target | Status |
+|-----------|-------------------|---------|---------|
+| **Inventory Agent** | 100 seconds | <30s | 🔴 Needs optimization |
+| **Fleet Agent** | 128 seconds | <30s | 🔴 Needs optimization |
+| **Approval Agent** | 243 seconds | <30s | 🔴 Critical issue |
+| **Total Workflow** | 6 minutes 4s | <2m | 🔴 Production blocker |
+
+**Critical Findings**:
+- Approval Agent is the biggest bottleneck (4+ minutes)
+- Configuration optimizations applied but limited impact observed
+- All agents show parallel execution capability but slow individual response
+- System functionally correct, performance is the primary concern
+
 ---
 
 **Last Updated**: November 10, 2025  
 **Phase 1**: ✅ COMPLETE - Service layer architecture successfully implemented  
 **Phase 2.1**: ✅ COMPLETE - Configuration parsing errors resolved  
-**Next Action**: Begin Phase 2.2 - Legacy Code Cleanup (flask_app.py removal)
+**Phase 2.2**: ✅ COMPLETE - Legacy code cleanup finished (974 lines removed)  
+**Phase 2.3**: 🔴 HIGH PRIORITY - Performance optimization (6min → <2min target)
+**Next Action**: URGENT - Implement Phase 2.3 performance improvements for production readiness

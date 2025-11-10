@@ -17,7 +17,7 @@ The actual business logic is in InventoryService.
 import asyncio
 import logging
 from datetime import datetime
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 
 # Strands Agent imports
 from strands import Agent, tool
