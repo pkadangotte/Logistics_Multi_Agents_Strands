@@ -1,0 +1,69 @@
+{
+    "agv_models": {
+        "AGV-001": {
+            "model": "Kiva-Pro-HD",
+            "manufacturer": "LogiBot Systems",
+            "max_payload_kg": 500,
+            "capacity_pieces": 100,
+            "battery_capacity_kwh": 12.5,
+            "max_speed_mps": 1.5,
+            "dimensions": {"length_m": 1.2, "width_m": 0.8, "height_m": 0.3},
+            "sensors": ["LiDAR", "Camera", "Ultrasonic", "IMU"],
+            "navigation_system": "SLAM_V2",
+            "cost_per_hour": 8.50
+        },
+        "AGV-002": {
+            "model": "Kiva-Standard",
+            "manufacturer": "LogiBot Systems", 
+            "max_payload_kg": 250,
+            "capacity_pieces": 50,
+            "battery_capacity_kwh": 8.0,
+            "max_speed_mps": 1.2,
+            "dimensions": {"length_m": 1.0, "width_m": 0.7, "height_m": 0.25},
+            "sensors": ["LiDAR", "Ultrasonic", "IMU"],
+            "navigation_system": "SLAM_V1",
+            "cost_per_hour": 6.75
+        },
+        "AGV-003": {
+            "model": "Kiva-Pro-HD",
+            "manufacturer": "LogiBot Systems",
+            "max_payload_kg": 500,
+            "capacity_pieces": 100,
+            "battery_capacity_kwh": 12.5,
+            "max_speed_mps": 1.5,
+            "dimensions": {"length_m": 1.2, "width_m": 0.8, "height_m": 0.3},
+            "sensors": ["LiDAR", "Camera", "Ultrasonic", "IMU"],
+            "navigation_system": "SLAM_V2",
+            "cost_per_hour": 8.50
+        },
+        "AGV-004": {
+            "model": "Kiva-Lite",
+            "manufacturer": "LogiBot Systems",
+            "max_payload_kg": 125,
+            "capacity_pieces": 25,
+            "battery_capacity_kwh": 5.0,
+            "max_speed_mps": 1.0,
+            "dimensions": {"length_m": 0.8, "width_m": 0.6, "height_m": 0.2},
+            "sensors": ["Ultrasonic", "IMU"],
+            "navigation_system": "Basic_Grid",
+            "cost_per_hour": 4.25
+        }
+    },
+    "base_locations": {
+        "AGV_BASE": {
+            "coordinates": {"x": 0, "y": 0, "z": 0},
+            "description": "Main AGV parking and charging area",
+            "capacity": 8,
+            "charging_stations": 2
+        }
+    },
+    "navigation_points": {
+        "Central Warehouse": {"coordinates": {"x": 50, "y": 30, "z": 0}},
+        "Warehouse A": {"coordinates": {"x": 80, "y": 20, "z": 0}},
+        "Warehouse B": {"coordinates": {"x": 120, "y": 40, "z": 0}},
+        "Production Line A": {"coordinates": {"x": 200, "y": 60, "z": 0}},
+        "Production Line B": {"coordinates": {"x": 220, "y": 80, "z": 0}},
+        "Quality Control": {"coordinates": {"x": 150, "y": 100, "z": 0}},
+        "AGV_BASE": {"coordinates": {"x": 0, "y": 0, "z": 0}}
+    }
+}

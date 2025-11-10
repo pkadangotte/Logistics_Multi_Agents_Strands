@@ -27,34 +27,40 @@ except ImportError:
     LLM_AVAILABLE = False
     print("Requests not installed. Run: pip install requests")
 
-# Placeholder for Strands imports
-try:
-    from strands_agents import Agent, tool
-except ImportError:
-    class Agent:
-        def __init__(self, name: str):
-            self.name = name
-    
-    def tool(func):
-        return func
+# Strands Agent imports
+from strands import Agent, tool
+
+# Configuration loader import
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from config.config_loader import get_fleet_config, get_system_config
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-class FleetAgent(Agent):
+class FleetAgent:
     """
     AI-Powered Fleet Agent that manages AGV operations with intelligent decision-making.
     Uses LLM for route optimization, priority management, and operational decisions.
+    
+    This class provides the core business logic and data management for fleet operations,
+    while tools are defined separately and registered with the Strands Agent.
     """
     
-    def __init__(self, name: str = "FleetAgent", llm_model: str = "llama3.2"):
-        super().__init__(name=name)
-        self.llm_model = llm_model
-        self.llm_enabled = LLM_AVAILABLE
-        self.ollama_url = "http://localhost:11434/api/generate"
+    def __init__(self, llm_model: str = None):
+        # Load configuration from .env file
+        import os
+        llm_backend = os.getenv('LLM_BACKEND', 'ollama').lower()
+        self.llm_model = llm_model or os.getenv('OLLAMA_MODEL', 'qwen2.5:7b')
+        self.llm_enabled = LLM_AVAILABLE and (llm_backend == 'ollama')
         
-        # Test Ollama connection
-        if self.llm_enabled:
+        # Get Ollama URL from .env with fallback
+        ollama_base_url = os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434')
+        self.ollama_url = f"{ollama_base_url}/api/generate" if not ollama_base_url.endswith('/api/generate') else ollama_base_url
+        
+        # Test LLM connection based on backend
+        if self.llm_enabled and llm_backend == 'ollama':
             try:
                 # Test if Ollama is running
                 test_response = requests.post(
@@ -73,71 +79,68 @@ class FleetAgent(Agent):
         else:
             logger.warning("🤖 Requests library not available - using rule-based decisions")
         
-        # Mock AGV fleet data with piece-based capacity
-        self.vehicles = {
-            "AGV-001": {
-                "type": "heavy_duty_agv",
-                "capacity_pieces": 100,  # Can carry 100 pieces/parts
-                "current_location": "Warehouse A",
-                "status": "AVAILABLE",
-                "battery_level": 85,
-                "cost_per_trip": 5.00,
-                "max_speed_mps": 1.5,
-                "charging_status": "not_charging",
-                "last_updated": datetime.now().isoformat()
-            },
-            "AGV-002": {
-                "type": "standard_agv",
-                "capacity_pieces": 50,  # Can carry 50 pieces/parts
-                "current_location": "Warehouse B",
-                "status": "AVAILABLE", 
-                "battery_level": 92,
-                "cost_per_trip": 3.50,
-                "max_speed_mps": 1.2,
-                "charging_status": "not_charging",
-                "last_updated": datetime.now().isoformat()
-            },
-            "AGV-003": {
-                "type": "heavy_duty_agv",
-                "capacity_pieces": 100,  # Can carry 100 pieces/parts
-                "current_location": "Production Floor",
-                "status": "AVAILABLE",  # Demo mode: Always available
-                "battery_level": 87,  # Demo mode: Good battery level
-                "cost_per_trip": 5.00,
-                "max_speed_mps": 1.5,
-                "charging_status": "not_charging",
-                "last_updated": datetime.now().isoformat()
-            },
-            "AGV-004": {
-                "type": "light_duty_agv",
-                "capacity_pieces": 25,  # Can carry 25 pieces/parts
-                "current_location": "Loading Dock", 
-                "status": "AVAILABLE",  # Demo mode: Always available
-                "battery_level": 82,  # Demo mode: Good battery level
-                "cost_per_trip": 2.50,
-                "max_speed_mps": 1.0,
-                "charging_status": "not_charging",
-                "last_updated": datetime.now().isoformat()
-            }
-        }
-        
-        # AGV route database (factory floor distances in meters)
-        self.routes = {
-            ("Warehouse A", "Production Floor"): {"distance_m": 150, "time_minutes": 4},
-            ("Warehouse B", "Production Floor"): {"distance_m": 220, "time_minutes": 6},
-            ("Warehouse A", "Loading Dock"): {"distance_m": 80, "time_minutes": 2},
-            ("Warehouse B", "Loading Dock"): {"distance_m": 180, "time_minutes": 5},
-            ("Production Floor", "Warehouse A"): {"distance_m": 150, "time_minutes": 4},
-            ("Production Floor", "Warehouse B"): {"distance_m": 220, "time_minutes": 6},
-            ("Loading Dock", "Warehouse A"): {"distance_m": 80, "time_minutes": 2},
-            ("Loading Dock", "Production Floor"): {"distance_m": 200, "time_minutes": 5},
-            # Routes for our test scenario
-            ("Central Warehouse", "Manufacturing Cell 3 - CNC Machine #7"): {"distance_m": 180, "time_minutes": 5},
-            ("Warehouse A", "Manufacturing Cell 3 - CNC Machine #7"): {"distance_m": 160, "time_minutes": 4.5},
-            ("Warehouse B", "Manufacturing Cell 3 - CNC Machine #7"): {"distance_m": 240, "time_minutes": 6.5}
-        }
+        # Load fleet configuration from config files
+        self._load_fleet_configuration()
         
         logger.info(f"🤖 AGV FleetAgent initialized with {len(self.vehicles)} AGVs")
+
+    def _load_fleet_configuration(self):
+        """Load fleet data from configuration files"""
+        try:
+            fleet_config = get_fleet_config()
+            system_config = get_system_config()
+            
+            # Load AGV fleet with timestamp updates
+            self.vehicles = {}
+            agv_fleet = fleet_config.get('agv_fleet', {})
+            
+            for agv_id, agv_data in agv_fleet.items():
+                # Add timestamp to each AGV
+                vehicle_entry = agv_data.copy()
+                vehicle_entry['last_updated'] = datetime.now().isoformat()
+                self.vehicles[agv_id] = vehicle_entry
+            
+            # Load routes - convert from JSON format (key|key) to tuple format
+            self.routes = {}
+            routes_config = fleet_config.get('routes', {})
+            for route_key, route_data in routes_config.items():
+                # Convert "LocationA|LocationB" to ("LocationA", "LocationB")
+                source, destination = route_key.split('|', 1)
+                self.routes[(source, destination)] = route_data
+            
+            # Load delivery destinations
+            self.delivery_destinations = fleet_config.get('delivery_destinations', [])
+            
+            # Load charging stations
+            self.charging_stations = fleet_config.get('charging_stations', [])
+            
+            # Load system settings for demo mode
+            self.demo_mode = system_config.get('demo_mode', {}).get('enabled', True)
+            
+            logger.info(f"📋 Loaded fleet config: {len(self.vehicles)} AGVs, {len(self.routes)} routes")
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to load fleet configuration: {e}")
+            # Fallback to minimal default configuration
+            self.vehicles = {
+                "AGV-DEFAULT": {
+                    "type": "standard_agv",
+                    "capacity_pieces": 50,
+                    "current_location": "AGV_BASE",
+                    "status": "AVAILABLE",
+                    "battery_level": 85,
+                    "cost_per_trip": 4.0,
+                    "max_speed_mps": 1.2,
+                    "charging_status": "not_charging",
+                    "last_updated": datetime.now().isoformat()
+                }
+            }
+            self.routes = {
+                ("AGV_BASE", "Central Warehouse"): {"distance_m": 100, "time_minutes": 3}
+            }
+            self.delivery_destinations = []
+            self.charging_stations = []
+            self.demo_mode = True
 
     async def llm_decision(self, prompt: str, context: Dict[str, Any] = None) -> str:
         """
@@ -178,7 +181,7 @@ Provide a clear, actionable decision with reasoning. Be concise and specific."""
                         "num_predict": 150
                     }
                 },
-                timeout=60
+                timeout=120
             )
             
             if response.status_code == 200:
@@ -256,7 +259,6 @@ Provide specific, actionable recommendations.
                 "error": str(e)
             }
 
-    @tool
     async def schedule_delivery(
         self,
         part_number: str,
@@ -381,7 +383,6 @@ Recommend the best AGV ID and explain reasoning briefly.
                 "error": str(e)
             }
 
-    @tool
     async def get_delivery_status(self, delivery_id: str) -> Dict[str, Any]:
         """
         Get status of an existing delivery.
@@ -434,7 +435,6 @@ Recommend the best AGV ID and explain reasoning briefly.
                 "error": str(e)
             }
 
-    @tool
     async def get_fleet_availability(self) -> Dict[str, Any]:
         """
         Get current AGV fleet availability and status.
@@ -490,7 +490,6 @@ Recommend the best AGV ID and explain reasoning briefly.
                 "error": str(e)
             }
 
-    @tool
     async def calculate_delivery_cost(
         self,
         source_location: str,
@@ -563,7 +562,6 @@ Recommend the best AGV ID and explain reasoning briefly.
                 "error": str(e)
             }
 
-    @tool
     async def get_ai_fleet_recommendations(self) -> Dict[str, Any]:
         """
         Get AI-powered recommendations for fleet optimization and operations.
@@ -776,40 +774,206 @@ Recommend the best AGV ID and explain reasoning briefly.
                 logger.error(f"❌ AGV monitoring error: {str(e)}")
                 await asyncio.sleep(60)
 
-def create_fleet_agent() -> FleetAgent:
-    """Factory function to create AI-powered FleetAgent with Ollama"""
-    return FleetAgent(name="AI_FleetAgent", llm_model="llama3:latest")
+# Global FleetAgent instance for tools to use  
+_fleet_agent = FleetAgent(llm_model="qwen2.5:7b")  # Use qwen2.5:7b model for better performance# Strands Agent Tools - Explicitly registered functions with @tool decorator
+
+# AGV management - Fleet agent handles AGV operations internally
+
+# AGV-specific functions removed - Fleet Agent handles AGV coordination internally
+
+@tool
+async def schedule_delivery(
+    part_number: str,
+    quantity: int,
+    source_location: str,
+    destination: str,
+    priority: str = "MEDIUM",
+    request_id: str = None
+) -> Dict[str, Any]:
+    """
+    Schedule an AGV delivery for replenishment request with AI-powered optimization.
+    
+    Args:
+        part_number: Part to be delivered
+        quantity: Quantity to deliver (in pieces/units)
+        source_location: Pickup location (e.g., 'Warehouse A', 'Central Warehouse')
+        destination: Delivery destination (e.g., 'Production Floor', 'Manufacturing Cell 3')
+        priority: Delivery priority (LOW, MEDIUM, HIGH, URGENT)
+        request_id: Associated request ID for tracking
+        
+    Returns:
+        Dict with AGV delivery scheduling results including timing and cost
+    """
+    return await _fleet_agent.schedule_delivery(
+        part_number, quantity, source_location, destination, priority, request_id
+    )
+
+@tool
+async def get_delivery_status(delivery_id: str) -> Dict[str, Any]:
+    """
+    Get current status of an AGV delivery in progress.
+    
+    Args:
+        delivery_id: Delivery ID to track (format: AGV-DEL-{request}-{timestamp})
+        
+    Returns:
+        Dict with delivery status, location, and estimated completion time
+    """
+    return await _fleet_agent.get_delivery_status(delivery_id)
+
+@tool
+async def get_fleet_availability() -> Dict[str, Any]:
+    """
+    Get current AGV fleet availability and status overview.
+    
+    Returns:
+        Dict with fleet status including available AGVs, capacities, and locations
+    """
+    return await _fleet_agent.get_fleet_availability()
+
+@tool
+async def calculate_delivery_cost(
+    source_location: str,
+    destination: str,
+    quantity: int,
+    priority: str = "MEDIUM"
+) -> Dict[str, Any]:
+    """
+    Calculate AGV delivery cost for a specific route and quantity.
+    
+    Args:
+        source_location: Pickup location
+        destination: Delivery destination  
+        quantity: Quantity to deliver (affects handling costs)
+        priority: Delivery priority (affects cost multiplier)
+        
+    Returns:
+        Dict with detailed cost breakdown including AGV trip, handling, and energy costs
+    """
+    return await _fleet_agent.calculate_delivery_cost(
+        source_location, destination, quantity, priority
+    )
+
+@tool
+async def get_ai_fleet_recommendations() -> Dict[str, Any]:
+    """
+    Get AI-powered recommendations for fleet optimization and operational improvements.
+    
+    Returns:
+        Dict with LLM-generated fleet optimization recommendations and analysis
+    """
+    return await _fleet_agent.get_ai_fleet_recommendations()
+
+def create_fleet_agent(use_local_model: bool = False, hooks=None) -> Agent:
+    """
+    Factory function to create Strands Agent with FleetAgent tools.
+    
+    Args:
+        use_local_model: If True, uses a local Ollama model instead of AWS Bedrock
+    
+    Returns:
+        Strands Agent configured with AGV fleet management tools
+    """
+    system_prompt = """You are an AI-powered Fleet Manager for AGV (Automated Guided Vehicle) operations in a manufacturing facility.
+
+Your responsibilities include:
+- Scheduling and optimizing AGV deliveries for replenishment requests
+- Managing individual AGV operations and mission assignments
+- Coordinating AGV fleet availability and battery levels
+- Calculating delivery costs and route optimization
+- Providing real-time delivery tracking and status updates
+- Optimizing fleet operations with AI-driven recommendations
+- Managing individual AGV missions from assignment to completion
+
+You have access to advanced fleet management tools that use AI/LLM capabilities for:
+- Fleet-level operations: scheduling, status tracking, cost calculation
+- Individual AGV control: mission assignment, execution, status monitoring
+- Intelligent AGV selection and route optimization
+- Priority-based delivery scheduling
+- Fleet performance analysis and recommendations
+- Real-time monitoring and status tracking
+
+Key capabilities:
+- Manage multiple AGVs with different capacities and capabilities
+- Assign and execute individual AGV delivery missions
+- Handle piece-based capacity calculations (25-200 pieces per AGV)
+- Optimize routes across warehouse and production locations
+- Provide cost-effective delivery solutions
+- Ensure efficient battery and charging management
+- Monitor individual AGV status and coordinate charging requests
+
+Be efficient, precise, and always optimize for both cost and delivery time.
+Prioritize safety and operational efficiency in all recommendations.
+
+IMPORTANT TIME FORMATTING:
+- Always express delivery times in MINUTES (e.g., "12 minutes", "6 minutes")
+- Never use days or hours for delivery estimates
+- Include specific arrival times: "AGV will arrive in X minutes"
+- Provide clear timeline: "Pickup in 1 minute, delivery in 6 minutes total"
+- Use precise language: "ETA: 8 minutes" not "ETA: later today"
+
+Example good responses:
+✅ "AGV-001 scheduled, arrival in 12 minutes"  
+✅ "Delivery ETA: 6 minutes from pickup"
+✅ "Total transit time: 8 minutes"
+
+Example bad responses:
+❌ "Delivery tomorrow"
+❌ "Will arrive later"  
+❌ "ETA: 0.2 hours" """
+
+    # Configure model based on preference
+    agent_kwargs = {
+        "system_prompt": system_prompt,
+        "tools": [
+            # Fleet-level operations
+            schedule_delivery,
+            get_delivery_status,
+            get_fleet_availability,
+            calculate_delivery_cost,
+            get_ai_fleet_recommendations
+        ]
+    }
+    
+    # Add hooks if provided
+    if hooks:
+        agent_kwargs["hooks"] = hooks
+        logger.info("🪝 Adding observability hooks to fleet agent")
+    
+    if use_local_model:
+        # Use direct OllamaModel for proper tool execution
+        try:
+            from strands.models.ollama import OllamaModel
+            agent_kwargs["model"] = OllamaModel(
+                host="http://localhost:11434",
+                model_id="qwen2.5:7b",
+                keep_alive=300
+            )
+            logger.info("🦙 Using OllamaModel for fleet operations")
+        except ImportError:
+            logger.warning("⚠️  OllamaModel not available, using default model")
+    else:
+        logger.info("🌐 Using default Strands model for fleet operations")
+
+    return Agent(**agent_kwargs)
 
 if __name__ == "__main__":
-    # Test the AI-powered AGV fleet agent
-    async def test_ai_agv_fleet_agent():
-        agent = create_fleet_agent()
-        
-        print("🤖 Testing AI-Powered AGV Fleet Agent")
-        print("=" * 50)
-        
-        # Test AGV delivery scheduling with AI
-        print("\n📦 Testing AGV delivery scheduling...")
-        delivery = await agent.schedule_delivery(
-            "PART-ABC123", 25, "Warehouse A", "Production Floor", "HIGH", "TEST-REQ-001"
-        )
-        print(f"AGV delivery result: {delivery}")
-        
-        # Test AGV cost calculation
-        print("\n💰 Testing cost calculation...")
-        cost = await agent.calculate_delivery_cost(
-            "Warehouse A", "Production Floor", 25, "HIGH"
-        )
-        print(f"Cost breakdown: {cost}")
-        
-        # Test AGV fleet availability with piece capacity
-        print("\n📊 Testing fleet availability...")
-        availability = await agent.get_fleet_availability()
-        print(f"Fleet status: {availability}")
-        
-        # Test AI recommendations
-        print("\n🧠 Testing AI fleet recommendations...")
-        ai_recommendations = await agent.get_ai_fleet_recommendations()
-        print(f"AI recommendations: {ai_recommendations}")
+    # Test the fleet agent
+    import asyncio
     
-    asyncio.run(test_ai_agv_fleet_agent())
+    async def main():
+        # Create agent
+        agent = create_fleet_agent(use_local_model=True)
+        
+        # Test delivery scheduling
+        result = await schedule_delivery(
+            part_number="PART-ABC123",
+            quantity=25,
+            source_location="Warehouse A", 
+            destination="Production Floor",
+            priority="HIGH",
+            request_id="TEST-001"
+        )
+        print(f"Delivery scheduling result: {result}")
+    
+    asyncio.run(main())

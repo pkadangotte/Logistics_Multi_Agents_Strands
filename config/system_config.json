@@ -1,0 +1,40 @@
+{
+    "system_settings": {
+        "server_config": {
+            "host": "127.0.0.1",
+            "port": 5555,
+            "debug_mode": false,
+            "auto_reload": true
+        },
+        "ai_config": {
+            "ollama_url": "http://localhost:11434/api/generate",
+            "default_model": "llama3:latest",
+            "temperature": 0.3,
+            "timeout_seconds": 60,
+            "fallback_to_rules": true
+        },
+        "workflow_settings": {
+            "max_concurrent_requests": 10,
+            "request_timeout_minutes": 30,
+            "auto_cleanup_interval_hours": 24
+        }
+    },
+    "ui_config": {
+        "refresh_interval_ms": 2000,
+        "max_messages_display": 100,
+        "auto_scroll": true,
+        "theme": "default"
+    },
+    "demo_mode": {
+        "enabled": true,
+        "auto_reset_agvs": true,
+        "unlimited_agv_availability": true,
+        "simulate_delays": false
+    },
+    "logging": {
+        "level": "INFO",
+        "file_logging": false,
+        "log_file": "logistics_system.log",
+        "max_log_size_mb": 50
+    }
+}

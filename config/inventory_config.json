@@ -1,0 +1,83 @@
+{
+    "parts_catalog": {
+        "HYDRAULIC-PUMP-HP450": {
+            "available_quantity": 24,
+            "reserved_quantity": 2,
+            "warehouse_location": "Central Warehouse",
+            "cost_per_unit": 245.00,
+            "lead_time_days": 1,
+            "supplier": "HydroTech Systems",
+            "description": "Heavy-duty hydraulic pump for CNC machinery",
+            "category": "Hydraulic Components",
+            "reorder_point": 10,
+            "maximum_stock": 50
+        },
+        "PART-ABC123": {
+            "available_quantity": 85,
+            "reserved_quantity": 15,
+            "warehouse_location": "Warehouse A",
+            "cost_per_unit": 12.50,
+            "lead_time_days": 2,
+            "supplier": "Supplier Corp",
+            "description": "Standard production part",
+            "category": "Standard Components",
+            "reorder_point": 25,
+            "maximum_stock": 150
+        },
+        "PART-XYZ789": {
+            "available_quantity": 42,
+            "reserved_quantity": 8,
+            "warehouse_location": "Warehouse B",
+            "cost_per_unit": 18.75,
+            "lead_time_days": 1,
+            "supplier": "Parts Inc",
+            "description": "Specialized part",
+            "category": "Specialized Components",
+            "reorder_point": 15,
+            "maximum_stock": 75
+        },
+        "PART-DEF456": {
+            "available_quantity": 120,
+            "reserved_quantity": 25,
+            "warehouse_location": "Warehouse A",
+            "cost_per_unit": 8.25,
+            "lead_time_days": 3,
+            "supplier": "FastParts Ltd",
+            "description": "Common component",
+            "category": "Standard Components",
+            "reorder_point": 40,
+            "maximum_stock": 200
+        }
+    },
+    "demand_history": {
+        "HYDRAULIC-PUMP-HP450": [
+            {"date": "2025-10-15", "quantity": 8, "priority": "HIGH", "machine": "CNC-007"},
+            {"date": "2025-10-28", "quantity": 4, "priority": "MEDIUM", "machine": "CNC-003"},
+            {"date": "2025-11-01", "quantity": 12, "priority": "HIGH", "machine": "CNC-007"},
+            {"date": "2025-11-03", "quantity": 6, "priority": "URGENT", "machine": "CNC-005"},
+            {"date": "2025-11-05", "quantity": 10, "priority": "HIGH", "machine": "CNC-007"}
+        ],
+        "PART-ABC123": [
+            {"date": "2025-11-01", "quantity": 45, "priority": "HIGH"},
+            {"date": "2025-11-02", "quantity": 30, "priority": "MEDIUM"},
+            {"date": "2025-11-03", "quantity": 55, "priority": "URGENT"},
+            {"date": "2025-11-04", "quantity": 20, "priority": "LOW"},
+            {"date": "2025-11-05", "quantity": 40, "priority": "HIGH"}
+        ],
+        "PART-XYZ789": [
+            {"date": "2025-11-01", "quantity": 15, "priority": "MEDIUM"},
+            {"date": "2025-11-02", "quantity": 25, "priority": "HIGH"},
+            {"date": "2025-11-03", "quantity": 10, "priority": "LOW"},
+            {"date": "2025-11-04", "quantity": 35, "priority": "URGENT"},
+            {"date": "2025-11-05", "quantity": 20, "priority": "MEDIUM"}
+        ]
+    },
+    "warehouse_locations": [
+        "Central Warehouse",
+        "Warehouse A", 
+        "Warehouse B",
+        "Production Line A",
+        "Production Line B",
+        "Quality Control"
+    ]
+}

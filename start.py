@@ -15,13 +15,20 @@ import signal
 import psutil
 from pathlib import Path
 
+# Import config loader to get server settings
+sys.path.append(str(Path(__file__).parent))
+from config.config_loader import get_system_config
+
 def find_flask_processes():
     """Find all running Flask processes for this application."""
     processes = []
     for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
         try:
-            if proc.info['cmdline'] and 'flask_app.py' in ' '.join(proc.info['cmdline']):
-                processes.append(proc)
+            if proc.info['cmdline']:
+                cmdline = ' '.join(proc.info['cmdline'])
+                # Look for either flask run or flask_app.py patterns
+                if ('flask run' in cmdline and 'flask_app.py' in cmdline) or 'flask_app.py' in cmdline:
+                    processes.append(proc)
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             continue
     return processes
@@ -69,13 +76,37 @@ def start_server():
         # Change to the project directory
         os.chdir(current_dir)
         
+        # Find flask executable in venv
+        venv_flask = current_dir / ".venv" / "bin" / "flask"
+        if not venv_flask.exists():
+            print("❌ Flask not found in virtual environment!")
+            print(f"   Expected: {venv_flask}")
+            print("   Please run: pip install flask")
+            return False
+        
+        # Load server configuration from config file
+        try:
+            system_config = get_system_config()
+            server_config = system_config.get('system_settings', {}).get('server_config', {})
+            host = server_config.get('host', '0.0.0.0')
+            port = server_config.get('port', 5555)
+            print(f"🔧 Using server config: {host}:{port}")
+        except Exception as e:
+            print(f"⚠️  Could not load server config: {e}")
+            print("   Using default values: 0.0.0.0:5555")
+            host = '0.0.0.0'
+            port = 5555
+        
         # Start the process in the background with proper detachment
         log_file = open('server.log', 'w')
+        env = os.environ.copy()
+        env['FLASK_APP'] = 'flask_app.py'
         process = subprocess.Popen(
-            [str(venv_python), str(flask_app)],
+            [str(venv_flask), "run", f"--host={host}", f"--port={port}"],
             stdout=log_file,
             stderr=subprocess.STDOUT,
-            stdin=subprocess.DEVNULL
+            stdin=subprocess.DEVNULL,
+            env=env
         )
         
         # Wait a bit to see if it starts successfully
@@ -87,8 +118,8 @@ def start_server():
             print("✅ Server started successfully!")
             print(f"   PID: {process.pid}")
             print("\n🌐 Access your application at:")
-            print("   • Local:   http://127.0.0.1:5555")
-            print("   • Network: http://192.168.1.179:5555")
+            print(f"   • Local:   http://127.0.0.1:{port}")
+            print(f"   • Network: http://{host}:{port}" if host != '127.0.0.1' else f"   • Network: http://192.168.1.179:{port}")
             print("\n🔧 Management:")
             print("   • Stop server: python stop.py")
             print("   • View logs:   tail -f server.log")

@@ -14,6 +14,10 @@ import time
 import psutil
 from pathlib import Path
 
+# Import config loader to get server settings
+sys.path.append(str(Path(__file__).parent))
+from config.config_loader import get_system_config
+
 def find_flask_processes():
     """Find all running Flask processes for this application."""
     processes = []
@@ -25,8 +29,11 @@ def find_flask_processes():
             with open(pid_file, 'r') as f:
                 pid = int(f.read().strip())
             proc = psutil.Process(pid)
-            if proc.is_running() and 'flask_app.py' in ' '.join(proc.cmdline()):
-                processes.append(proc)
+            if proc.is_running():
+                cmdline = ' '.join(proc.cmdline())
+                # Check for either flask run or flask_app.py patterns
+                if ('flask run' in cmdline and 'flask_app.py' in cmdline) or 'flask_app.py' in cmdline:
+                    processes.append(proc)
         except (ValueError, psutil.NoSuchProcess, psutil.AccessDenied):
             # PID file exists but process is not running, remove stale PID file
             pid_file.unlink()
@@ -34,9 +41,12 @@ def find_flask_processes():
     # Also search for processes by command line
     for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
         try:
-            if proc.info['cmdline'] and 'flask_app.py' in ' '.join(proc.info['cmdline']):
-                if proc not in processes:  # Avoid duplicates
-                    processes.append(proc)
+            if proc.info['cmdline']:
+                cmdline = ' '.join(proc.info['cmdline'])
+                # Look for either flask run or flask_app.py patterns
+                if (('flask run' in cmdline and 'flask_app.py' in cmdline) or 'flask_app.py' in cmdline):
+                    if proc not in processes:  # Avoid duplicates
+                        processes.append(proc)
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             continue
     return processes
@@ -45,6 +55,19 @@ def stop_server():
     """Stop the Flask server."""
     print("🛑 Stopping Flask Logistics Dashboard Server...")
     print("=" * 60)
+    
+    # Load server configuration to get the correct port
+    try:
+        system_config = get_system_config()
+        server_config = system_config.get('system_settings', {}).get('server_config', {})
+        host = server_config.get('host', '127.0.0.1')
+        port = server_config.get('port', 5555)
+        print(f"🔧 Looking for server on: {host}:{port}")
+    except Exception as e:
+        print(f"⚠️  Could not load server config: {e}")
+        print("   Using default values: 127.0.0.1:5555")
+        host = '127.0.0.1'
+        port = 5555
     
     # Find running processes
     processes = find_flask_processes()
@@ -112,7 +135,7 @@ def stop_server():
         print("✅ All Flask server processes stopped successfully!")
         print("\n📊 Server shutdown summary:")
         print("   • All processes terminated")
-        print("   • http://127.0.0.1:5555 is no longer accessible")
+        print(f"   • http://{host}:{port} is no longer accessible")
         print("   • AI agents have been shut down")
         print("   • Resources have been freed")
         print("\n💡 To start the server again, run: python start.py")

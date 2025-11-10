@@ -24,38 +24,41 @@ try:
     LLM_AVAILABLE = True
 except ImportError:
     LLM_AVAILABLE = False
-    print("Requests not installed. Run: pip install requests")
 
-# Placeholder for Strands imports (will work when properly installed)
-try:
-    from strands_agents import Agent, tool
-except ImportError:
-    # Fallback for development/testing
-    class Agent:
-        def __init__(self, name: str):
-            self.name = name
-    
-    def tool(func):
-        """Decorator placeholder"""
-        return func
+# Strands Agent imports
+from strands import Agent, tool
+
+# Configuration loader import
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from config.config_loader import get_inventory_config
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-class InventoryAgent(Agent):
+class InventoryAgent:
     """
     AI-Powered Inventory Agent that manages stock operations with intelligent decision-making.
     Uses LLM for demand forecasting, reorder optimization, and inventory strategy decisions.
+    
+    This class provides the core business logic and data management for inventory operations,
+    while tools are defined separately and registered with the Strands Agent.
     """
     
-    def __init__(self, name: str = "InventoryAgent", llm_model: str = "llama3:latest"):
-        super().__init__(name=name)
-        self.llm_model = llm_model
-        self.llm_enabled = LLM_AVAILABLE
-        self.ollama_url = "http://localhost:11434/api/generate"
+    def __init__(self, llm_model: str = None):
+        # Load configuration from .env file
+        import os
+        llm_backend = os.getenv('LLM_BACKEND', 'ollama').lower()
+        self.llm_model = llm_model or os.getenv('OLLAMA_MODEL', 'qwen2.5:7b')
+        self.llm_enabled = LLM_AVAILABLE and (llm_backend == 'ollama')
         
-        # Test Ollama connection
-        if self.llm_enabled:
+        # Get Ollama URL from .env with fallback
+        ollama_base_url = os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434')
+        self.ollama_url = f"{ollama_base_url}/api/generate" if not ollama_base_url.endswith('/api/generate') else ollama_base_url
+        
+        # Test LLM connection based on backend
+        if self.llm_enabled and llm_backend == 'ollama':
             try:
                 # Test if Ollama is running
                 test_response = requests.post(
@@ -74,74 +77,52 @@ class InventoryAgent(Agent):
         else:
             logger.warning("🧠 Requests library not available - using rule-based inventory management")
         
-        # Mock inventory database
-        self.inventory_data = {
-            "HYDRAULIC-PUMP-HP450": {
-                "available_quantity": 24,
-                "reserved_quantity": 2,
-                "warehouse_location": "Central Warehouse",
-                "cost_per_unit": 245.00,
-                "lead_time_days": 1,
-                "supplier": "HydroTech Systems",
-                "last_updated": datetime.now().isoformat(),
-                "description": "Heavy-duty hydraulic pump for CNC machinery",
-                "category": "Hydraulic Components"
-            },
-            "PART-ABC123": {
-                "available_quantity": 85,
-                "reserved_quantity": 15,
-                "warehouse_location": "Warehouse A",
-                "cost_per_unit": 12.50,
-                "lead_time_days": 2,
-                "supplier": "Supplier Corp",
-                "last_updated": datetime.now().isoformat()
-            },
-            "PART-XYZ789": {
-                "available_quantity": 42,
-                "reserved_quantity": 8,
-                "warehouse_location": "Warehouse B", 
-                "cost_per_unit": 18.75,
-                "lead_time_days": 1,
-                "supplier": "Parts Inc",
-                "last_updated": datetime.now().isoformat()
-            },
-            "PART-DEF456": {
-                "available_quantity": 120,
-                "reserved_quantity": 25,
-                "warehouse_location": "Warehouse A",
-                "cost_per_unit": 8.25,
-                "lead_time_days": 3,
-                "supplier": "FastParts Ltd",
-                "last_updated": datetime.now().isoformat()
-            }
-        }
-        
-        # Historical demand data for AI analysis
-        self.demand_history = {
-            "HYDRAULIC-PUMP-HP450": [
-                {"date": "2025-10-15", "quantity": 8, "priority": "HIGH", "machine": "CNC-007"},
-                {"date": "2025-10-28", "quantity": 4, "priority": "MEDIUM", "machine": "CNC-003"},
-                {"date": "2025-11-01", "quantity": 12, "priority": "HIGH", "machine": "CNC-007"},
-                {"date": "2025-11-03", "quantity": 6, "priority": "URGENT", "machine": "CNC-005"},
-                {"date": "2025-11-05", "quantity": 10, "priority": "HIGH", "machine": "CNC-007"}
-            ],
-            "PART-ABC123": [
-                {"date": "2025-11-01", "quantity": 45, "priority": "HIGH"},
-                {"date": "2025-11-02", "quantity": 30, "priority": "MEDIUM"},
-                {"date": "2025-11-03", "quantity": 55, "priority": "URGENT"},
-                {"date": "2025-11-04", "quantity": 20, "priority": "LOW"},
-                {"date": "2025-11-05", "quantity": 40, "priority": "HIGH"}
-            ],
-            "PART-XYZ789": [
-                {"date": "2025-11-01", "quantity": 15, "priority": "MEDIUM"},
-                {"date": "2025-11-02", "quantity": 25, "priority": "HIGH"},
-                {"date": "2025-11-03", "quantity": 10, "priority": "LOW"},
-                {"date": "2025-11-04", "quantity": 35, "priority": "URGENT"},
-                {"date": "2025-11-05", "quantity": 20, "priority": "MEDIUM"}
-            ]
-        }
+        # Load inventory configuration from config files
+        self._load_inventory_configuration()
         
         logger.info(f"🧠 AI InventoryAgent initialized with {len(self.inventory_data)} parts and demand history")
+
+    def _load_inventory_configuration(self):
+        """Load inventory data from configuration files"""
+        try:
+            inventory_config = get_inventory_config()
+            
+            # Load parts catalog with timestamp updates
+            self.inventory_data = {}
+            parts_catalog = inventory_config.get('parts_catalog', {})
+            
+            for part_number, part_data in parts_catalog.items():
+                # Add timestamp to each part
+                inventory_entry = part_data.copy()
+                inventory_entry['last_updated'] = datetime.now().isoformat()
+                self.inventory_data[part_number] = inventory_entry
+            
+            # Load demand history
+            self.demand_history = inventory_config.get('demand_history', {})
+            
+            # Load warehouse locations
+            self.warehouse_locations = inventory_config.get('warehouse_locations', [])
+            
+            logger.info(f"📋 Loaded inventory config: {len(self.inventory_data)} parts, {len(self.demand_history)} demand histories")
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to load inventory configuration: {e}")
+            # Fallback to minimal default configuration
+            self.inventory_data = {
+                "PART-DEFAULT": {
+                    "available_quantity": 10,
+                    "reserved_quantity": 0,
+                    "warehouse_location": "Central Warehouse",
+                    "cost_per_unit": 10.0,
+                    "lead_time_days": 1,
+                    "supplier": "Default Supplier",
+                    "last_updated": datetime.now().isoformat(),
+                    "description": "Default part (config loading failed)",
+                    "category": "Default"
+                }
+            }
+            self.demand_history = {}
+            self.warehouse_locations = ["Central Warehouse"]
 
     async def llm_inventory_decision(self, prompt: str, context: Dict[str, Any] = None) -> str:
         """
@@ -182,7 +163,7 @@ Provide clear, actionable inventory recommendations with reasoning. Be concise a
                         "num_predict": 150
                     }
                 },
-                timeout=60
+                timeout=120
             )
             
             if response.status_code == 200:
@@ -247,7 +228,6 @@ Consider seasonality, trends, and priority patterns in the historical data.
                 "error": str(e)
             }
 
-    @tool
     async def check_availability(
         self, 
         part_number: str, 
@@ -346,7 +326,6 @@ Provide recommendation: APPROVE, APPROVE_PARTIAL, or DECLINE with reasoning.
                 "error": str(e)
             }
 
-    @tool
     async def reserve_inventory(
         self,
         part_number: str,
@@ -410,7 +389,6 @@ Provide recommendation: APPROVE, APPROVE_PARTIAL, or DECLINE with reasoning.
                 "error": str(e)
             }
 
-    @tool
     async def get_inventory_status(self, part_numbers: List[str] = None) -> Dict[str, Any]:
         """
         Get current inventory status for specified parts or all parts.
@@ -461,6 +439,18 @@ Provide recommendation: APPROVE, APPROVE_PARTIAL, or DECLINE with reasoning.
                 "error": str(e)
             }
 
+    def get_inventory_info(self, part_number: str) -> Dict[str, Any]:
+        """
+        Get direct inventory information for a specific part.
+        
+        Args:
+            part_number: Part number to look up
+            
+        Returns:
+            Dict with inventory data or None if part not found
+        """
+        return self.inventory_data.get(part_number)
+
     def get_alternative_parts(self, part_number: str) -> List[str]:
         """Get alternative/similar parts"""
         # Simple logic - return other parts from same category
@@ -506,7 +496,6 @@ Provide recommendation: APPROVE, APPROVE_PARTIAL, or DECLINE with reasoning.
                 logger.error(f"❌ Monitoring error: {str(e)}")
                 await asyncio.sleep(60)
 
-    @tool
     async def get_ai_inventory_recommendations(self) -> Dict[str, Any]:
         """
         Get AI-powered recommendations for inventory optimization.
@@ -574,7 +563,6 @@ Provide specific, actionable recommendations with priorities.
                 "error": str(e)
             }
 
-    @tool
     async def predict_demand_with_ai(self, part_number: str, days_ahead: int = 7) -> Dict[str, Any]:
         """
         Use AI to predict future demand for a specific part.
@@ -627,44 +615,174 @@ Format as specific daily predictions with reasoning.
                 "error": str(e)
             }
 
-def create_inventory_agent() -> InventoryAgent:
-    """Factory function to create AI-powered InventoryAgent with Ollama"""
-    return InventoryAgent(name="AI_InventoryAgent", llm_model="llama3:latest")
+# Global InventoryAgent instance for tools to use
+_inventory_agent = InventoryAgent(llm_model="qwen2.5:7b")  # Use qwen2.5:7b model for better performance
+
+# Strands Agent Tools - Explicitly registered functions with @tool decorator
+
+@tool
+async def check_availability(
+    part_number: str, 
+    quantity_needed: int,
+    priority: str = "MEDIUM"
+) -> Dict[str, Any]:
+    """
+    Check if requested quantity is available in inventory with AI-powered analysis.
+    
+    Args:
+        part_number: Part number to check (e.g., 'HYDRAULIC-PUMP-HP450', 'PART-ABC123')
+        quantity_needed: Required quantity in units
+        priority: Request priority (LOW, MEDIUM, HIGH, URGENT) - affects allocation logic
+        
+    Returns:
+        Dict with availability status, costs, lead times, and AI recommendations
+    """
+    return await _inventory_agent.check_availability(part_number, quantity_needed, priority)
+
+@tool
+async def reserve_inventory(
+    part_number: str,
+    quantity: int,
+    request_id: str,
+    duration_hours: int = 24
+) -> Dict[str, Any]:
+    """
+    Reserve inventory for a specific replenishment request.
+    
+    Args:
+        part_number: Part to reserve from inventory
+        quantity: Quantity to reserve in units
+        request_id: Associated request ID for tracking purposes
+        duration_hours: Reservation duration in hours (default: 24)
+        
+    Returns:
+        Dict with reservation details including reservation ID and expiration
+    """
+    return await _inventory_agent.reserve_inventory(part_number, quantity, request_id, duration_hours)
+
+@tool
+async def get_inventory_status(part_numbers: List[str] = None) -> Dict[str, Any]:
+    """
+    Get current inventory status for specified parts or all parts in system.
+    
+    Args:
+        part_numbers: List of specific parts to check (optional, defaults to all parts)
+        
+    Returns:
+        Dict with comprehensive inventory status including stock levels and locations
+    """
+    return await _inventory_agent.get_inventory_status(part_numbers)
+
+@tool
+async def predict_demand_with_ai(part_number: str, days_ahead: int = 7) -> Dict[str, Any]:
+    """
+    Use AI to predict future demand patterns for inventory planning.
+    
+    Args:
+        part_number: Part to analyze for demand forecasting
+        days_ahead: Number of days to predict ahead (default: 7)
+        
+    Returns:
+        Dict with AI-powered demand predictions and recommendations
+    """
+    return await _inventory_agent.predict_demand_with_ai(part_number, days_ahead)
+
+@tool
+async def get_ai_inventory_recommendations() -> Dict[str, Any]:
+    """
+    Get AI-powered recommendations for inventory optimization and management.
+    
+    Returns:
+        Dict with LLM-generated inventory optimization recommendations and strategies
+    """
+    return await _inventory_agent.get_ai_inventory_recommendations()
+
+def create_inventory_agent(use_local_model: bool = False, hooks=None) -> Agent:
+    """
+    Factory function to create Strands Agent with InventoryAgent tools.
+    
+    Args:
+        use_local_model: If True, uses a local Ollama model instead of AWS Bedrock
+    
+    Returns:
+        Strands Agent configured with inventory management tools
+    """
+    system_prompt = """You are an AI-powered Inventory Manager for a manufacturing facility's supply chain operations.
+
+Your responsibilities include:
+- Monitoring and managing stock levels for manufacturing parts and components
+- Checking availability and processing inventory reservations
+- Analyzing demand patterns and predicting future inventory needs
+- Providing cost optimization and reorder recommendations
+- Managing warehouse locations and supplier relationships
+
+You have access to advanced inventory management tools that use AI/LLM capabilities for:
+- Intelligent availability checking with priority-based allocation
+- AI-powered demand forecasting and trend analysis
+- Smart inventory reservation and optimization
+- Predictive reorder point calculations
+- Cost analysis and supplier performance insights
+
+Key inventory capabilities:
+- Manage diverse parts catalog including hydraulic components, standard parts, and specialized equipment
+- Handle multi-location inventory across Central Warehouse, Warehouse A, and Warehouse B
+- Process reservations with flexible duration and automatic expiration
+- Provide real-time stock level monitoring and alerts
+- Generate AI-driven recommendations for inventory optimization
+
+Inventory data includes:
+- HYDRAULIC-PUMP-HP450: High-value hydraulic components for CNC machinery
+- PART-ABC123, PART-XYZ789, PART-DEF456: Standard manufacturing parts
+- Historical demand patterns for accurate forecasting
+- Supplier information and lead time management
+
+Be precise, cost-conscious, and always optimize for both availability and efficiency.
+Prioritize preventing stockouts while minimizing carrying costs."""
+
+    # Configure model based on preference
+    agent_kwargs = {
+        "system_prompt": system_prompt,
+        "tools": [
+            check_availability,
+            reserve_inventory,
+            get_inventory_status,
+            predict_demand_with_ai,
+            get_ai_inventory_recommendations
+        ]
+    }
+    
+    # Add hooks if provided
+    if hooks:
+        agent_kwargs["hooks"] = hooks
+        logger.info("🪝 Adding observability hooks to inventory agent")
+    
+    if use_local_model:
+        # Use direct OllamaModel for proper tool execution
+        try:
+            from strands.models.ollama import OllamaModel
+            agent_kwargs["model"] = OllamaModel(
+                host="http://localhost:11434",
+                model_id="qwen2.5:7b",
+                keep_alive=300
+            )
+            logger.info("🦙 Using OllamaModel for inventory operations")
+        except ImportError:
+            logger.warning("⚠️  OllamaModel not available, using default model")
+    else:
+        logger.info("🌐 Using default Strands model for inventory operations")
+
+    return Agent(**agent_kwargs)
 
 if __name__ == "__main__":
-    # Test the AI-powered inventory agent
-    async def test_ai_inventory_agent():
-        agent = create_inventory_agent()
-        
-        print("🧠 Testing AI-Powered Inventory Agent")
-        print("=" * 50)
-        
-        # Test AI-enhanced availability check
-        print("\n📦 Testing AI availability check...")
-        result = await agent.check_availability("PART-ABC123", 50, "HIGH")
-        print(f"Availability: {result.get('available', False)}")
-        print(f"AI Recommendation: {result.get('ai_recommendation', 'N/A')[:100]}...")
-        
-        # Test reservation with AI insights
-        if result.get("available"):
-            reservation = await agent.reserve_inventory("PART-ABC123", 25, "TEST-REQ-001")
-            print(f"\n🔒 Reservation: {reservation.get('reserved', False)}")
-        
-        # Test AI demand prediction
-        print("\n🔮 Testing AI demand prediction...")
-        demand_forecast = await agent.predict_demand_with_ai("PART-ABC123", 5)
-        if demand_forecast.get("success"):
-            print(f"Demand Forecast: {demand_forecast['ai_demand_forecast'][:150]}...")
-        
-        # Test AI inventory optimization
-        print("\n🧠 Testing AI inventory recommendations...")
-        ai_recommendations = await agent.get_ai_inventory_recommendations()
-        if ai_recommendations.get("success"):
-            print(f"AI Analysis: {ai_recommendations['ai_recommendations'][:200]}...")
-        
-        # Test status with AI insights
-        print("\n📊 Testing inventory status...")
-        status = await agent.get_inventory_status()
-        print(f"Total parts: {status.get('parts_count', 0)}")
+    # Test the inventory agent
+    import asyncio
     
-    asyncio.run(test_ai_inventory_agent())
+    async def main():
+        # Create agent
+        agent = create_inventory_agent(use_local_model=True)
+        
+        # Test availability check
+        result = await check_availability("HYDRAULIC-PUMP-HP450", 15, "HIGH")
+        print(f"Availability check result: {result}")
+    
+    asyncio.run(main())

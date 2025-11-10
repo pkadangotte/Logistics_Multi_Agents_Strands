@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Manufacturing Logistics Dashboard</title>
     <style>
         * {
@@ -95,11 +98,17 @@
             border-radius: 6px;
             font-size: 16px;
             transition: border-color 0.3s;
+            position: relative;
+            z-index: 100;
+            background: white;
+            cursor: pointer;
         }
         
         .form-group input:focus, .form-group select:focus {
             outline: none;
             border-color: #3498db;
+            z-index: 200;
+            box-shadow: 0 0 10px rgba(52, 152, 219, 0.3);
         }
         
         .submit-btn {
@@ -168,14 +177,19 @@
         }
         
         .agent-logs-header {
-            border-bottom: 1px solid #bfdbfe;
-            padding-bottom: 1rem;
-            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+            color: white;
+            padding: 1rem 1.5rem;
+            margin: 0;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            backdrop-filter: blur(10px);
         }
         
         .agent-logs-header h2 {
-            color: #1e40af;
-            font-size: 1.125rem;
+            color: white;
+            font-size: 1rem;
             font-weight: 600;
             margin-bottom: 0.25rem;
             display: flex;
@@ -184,76 +198,103 @@
         }
         
         .agent-logs-header p {
-            color: #3b82f6;
-            font-size: 0.8125rem;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.75rem;
             margin: 0;
-            font-weight: 500;
+            font-weight: 400;
         }
         
         .agent-logs-container {
-            height: calc(100vh - 250px);
+            height: calc(100vh - 200px);
             overflow-y: auto;
-            padding-right: 0.5rem;
-            background: #ffffff;
-            border-radius: 0.5rem;
-            border: 1px solid #bfdbfe;
+            padding: 0;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: 0;
+            border: none;
+            position: relative;
         }
         
         .agent-logs-container::-webkit-scrollbar {
-            width: 4px;
+            width: 2px;
         }
         
         .agent-logs-container::-webkit-scrollbar-track {
-            background: #f1f5f9;
-            border-radius: 2px;
+            background: transparent;
         }
         
         .agent-logs-container::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 2px;
+            background: linear-gradient(180deg, #3b82f6, #1d4ed8);
+            border-radius: 1px;
         }
         
         .agent-logs-container::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
+            background: linear-gradient(180deg, #2563eb, #1e40af);
         }
         
         .no-activity {
             text-align: center;
             color: #64748b;
-            padding: 3rem 1rem;
+            padding: 4rem 2rem;
+            background: rgba(255, 255, 255, 0.5);
+            margin: 2rem 1rem;
+            border-radius: 1rem;
+            backdrop-filter: blur(10px);
         }
         
         .no-activity-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            opacity: 0.5;
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            opacity: 0.4;
+            filter: grayscale(100%);
         }
         
         .no-activity p {
             font-weight: 500;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.75rem;
             color: #475569;
+            font-size: 1rem;
         }
         
         .no-activity small {
-            font-size: 0.8125rem;
+            font-size: 0.875rem;
             color: #94a3b8;
+            font-style: italic;
         }
         
         .agent-log {
-            background: white;
-            margin-bottom: 0.5rem;
-            padding: 0.875rem;
-            border-radius: 0.5rem;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            transition: all 0.2s ease;
-            animation: slideInRight 0.3s ease-out;
+            background: rgba(255, 255, 255, 0.8);
+            margin-bottom: 0.25rem;
+            padding: 0.5rem 0.875rem;
+            border-radius: 0;
+            border: none;
+            border-left: 3px solid transparent;
+            box-shadow: none;
+            transition: all 0.15s ease;
+            animation: slideInRight 0.2s ease-out;
+            backdrop-filter: blur(10px);
+            position: relative;
         }
         
         .agent-log:hover {
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            transform: translateX(-2px);
+            background: rgba(255, 255, 255, 0.95);
+            border-left-color: #3b82f6;
+            transform: translateX(2px);
+        }
+        
+        .agent-log.inventory-agent {
+            border-left-color: #10b981;
+        }
+        
+        .agent-log.fleet-agent {
+            border-left-color: #f59e0b;
+        }
+        
+        .agent-log.approver-agent {
+            border-left-color: #8b5cf6;
+        }
+        
+        .agent-log.logistics-orchestrator {
+            border-left-color: #ef4444;
         }
         
         @keyframes slideInRight {
@@ -271,42 +312,63 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.25rem;
         }
         
         .agent-name {
-            font-weight: 600;
-            color: #3b82f6;
-            font-size: 0.875rem;
-            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            font-weight: 500;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            opacity: 0.8;
+        }
+        
+        .agent-name.inventory-agent {
+            color: #10b981;
+        }
+        
+        .agent-name.fleet-agent {
+            color: #f59e0b;
+        }
+        
+        .agent-name.approver-agent {
+            color: #8b5cf6;
+        }
+        
+        .agent-name.logistics-orchestrator {
+            color: #ef4444;
         }
         
         .agent-timestamp {
-            font-size: 0.75rem;
-            color: #64748b;
+            font-size: 0.6875rem;
+            color: #94a3b8;
             font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+            opacity: 0.7;
         }
         
         .agent-message {
-            color: #374151;
-            line-height: 1.5;
-            font-size: 0.9375rem;
+            color: #1f2937;
+            line-height: 1.4;
+            font-size: 0.8125rem;
+            font-weight: 400;
         }
         
         .current-activity {
-            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
             color: white;
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
+            padding: 0.625rem 1rem;
+            border-radius: 0;
             font-weight: 500;
-            margin-bottom: 1rem;
-            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
-            animation: pulse 2s infinite;
-            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+            box-shadow: none;
+            animation: none;
+            font-size: 0.8125rem;
             line-height: 1.4;
+            border-left: 4px solid #3b82f6;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            backdrop-filter: blur(10px);
         }
         
         .approval-section {
@@ -474,7 +536,7 @@
             100% { transform: rotate(360deg); }
         }
         
-        /* Main Layout CSS */
+        /* Simplified 2-Column Layout CSS */
         .main-content {
             display: flex !important;
             gap: 0;
@@ -484,7 +546,7 @@
         }
         
         .sidebar {
-            flex: 0 0 280px;
+            flex: 0 0 350px;
             background: #fafbfc;
             padding: 1.5rem;
             border-right: 1px solid #e2e8f0;
@@ -501,31 +563,11 @@
             background: linear-gradient(180deg, transparent, #e2e8f0 20%, #e2e8f0 80%, transparent);
         }
         
-        .workflow-area {
+        .results-area {
             flex: 1;
             background: white;
             padding: 1.5rem;
             overflow-y: auto;
-            border-right: 1px solid #e2e8f0;
-        }
-        
-        .agent-logs-section {
-            flex: 0 0 350px;
-            background: #fafbfc;
-            padding: 1.5rem;
-            overflow-y: auto;
-            position: relative;
-            min-height: 100vh;
-        }
-        
-        .agent-logs-section::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 1px;
-            height: 100%;
-            background: linear-gradient(180deg, transparent, #e2e8f0 20%, #e2e8f0 80%, transparent);
         }
         
         .form-group {
@@ -639,9 +681,25 @@
             top: 2rem;
             left: 12.5%;
             right: 12.5%;
-            height: 2px;
-            background: #e5e7eb;
+            height: 3px;
+            background: linear-gradient(90deg, #e5e7eb 0%, #e5e7eb 100%);
             z-index: 1;
+            border-radius: 1.5px;
+            transition: all 0.5s ease;
+        }
+        
+        .step-progress::after {
+            content: '';
+            position: absolute;
+            top: 2rem;
+            left: 12.5%;
+            width: 0%;
+            height: 3px;
+            background: linear-gradient(90deg, #10b981 0%, #667eea 50%, #764ba2 100%);
+            z-index: 2;
+            border-radius: 1.5px;
+            transition: width 0.8s ease;
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
         }
         
         .step {
@@ -697,6 +755,47 @@
             border-color: #e5e7eb;
         }
         
+        .step.error {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            border-color: #ef4444;
+            box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.3);
+        }
+        
+        .step.error div:first-child {
+            filter: none;
+            animation: shake 0.5s ease-in-out;
+        }
+        
+        .step.warning {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            border-color: #f59e0b;
+            box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.3);
+        }
+        
+        .step.warning div:first-child {
+            filter: none;
+            animation: pulse-warning 1s ease-in-out infinite;
+        }
+        
+        @keyframes pulse-warning {
+            0%, 100% { 
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% { 
+                transform: scale(1.05);
+                opacity: 0.8;
+            }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
         @keyframes bounce {
             0%, 20%, 53%, 80%, 100% {
                 transform: translate3d(0,0,0);
@@ -709,6 +808,168 @@
             }
             90% {
                 transform: translate3d(0, -2px, 0);
+            }
+        }
+        
+        /* Enhanced Step Animations for Agent Message Sync */
+        @keyframes stepActivation {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0);
+            }
+            25% {
+                transform: scale(1.15);
+                box-shadow: 0 0 15px 3px rgba(102, 126, 234, 0.4);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 0 25px 5px rgba(102, 126, 234, 0.6);
+            }
+            100% {
+                transform: scale(1.05);
+                box-shadow: 0 10px 15px -3px rgba(102, 126, 234, 0.3);
+            }
+        }
+        
+        @keyframes stepCompletion {
+            0% {
+                transform: scale(1.05);
+            }
+            25% {
+                transform: scale(1.2) rotate(5deg);
+                box-shadow: 0 0 20px 5px rgba(16, 185, 129, 0.6);
+            }
+            75% {
+                transform: scale(1.1) rotate(-2deg);
+                box-shadow: 0 0 25px 8px rgba(16, 185, 129, 0.4);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3);
+            }
+        }
+        
+        @keyframes stepError {
+            0%, 100% { 
+                transform: translateX(0) scale(1); 
+            }
+            10%, 30%, 50%, 70%, 90% { 
+                transform: translateX(-8px) scale(1.05); 
+                box-shadow: 0 0 15px 3px rgba(239, 68, 68, 0.5);
+            }
+            20%, 40%, 60%, 80% { 
+                transform: translateX(8px) scale(1.05); 
+                box-shadow: 0 0 20px 5px rgba(239, 68, 68, 0.7);
+            }
+        }
+        
+        @keyframes stepWarning {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.08);
+                box-shadow: 0 0 18px 4px rgba(245, 158, 11, 0.5);
+            }
+            100% {
+                transform: scale(1.05);
+                box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.3);
+            }
+        }
+        
+        @keyframes activePulse {
+            0%, 100% {
+                transform: scale(1.05);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.1);
+                opacity: 0.9;
+            }
+        }
+        
+        @keyframes warningPulse {
+            0%, 100% {
+                transform: scale(1.05);
+                box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.3);
+            }
+            50% {
+                transform: scale(1.08);
+                box-shadow: 0 0 15px 3px rgba(245, 158, 11, 0.5);
+            }
+        }
+        
+        @keyframes completionPulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 0 15px 3px rgba(16, 185, 129, 0.4);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3);
+            }
+        }
+        
+        /* Message Sync Indicator */
+        .step.message-sync {
+            animation: messageSyncFlash 0.3s ease-out !important;
+        }
+        
+        @keyframes messageSyncFlash {
+            0% {
+                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0);
+            }
+            50% {
+                box-shadow: 0 0 20px 5px rgba(102, 126, 234, 0.8);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0);
+            }
+        }
+        
+        /* New Message Effects */
+        .agent-log.new-message {
+            animation: newMessageGlow 1.5s ease-out;
+            border-left-width: 4px;
+        }
+        
+        @keyframes newMessageGlow {
+            0% {
+                background: rgba(102, 126, 234, 0.1);
+                transform: translateX(20px);
+                opacity: 0;
+            }
+            20% {
+                background: rgba(102, 126, 234, 0.15);
+                transform: translateX(0);
+                opacity: 1;
+            }
+            100% {
+                background: rgba(255, 255, 255, 0.8);
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        /* Message Counter Animation */
+        #messageCounter {
+            transition: all 0.3s ease;
+        }
+        
+        .message-counter-flash {
+            animation: counterFlash 1.2s ease-out;
+        }
+        
+        @keyframes counterFlash {
+            0%, 100% {
+                color: inherit;
+            }
+            50% {
+                color: #10b981;
+                text-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
             }
         }
         
@@ -898,7 +1159,37 @@
             font-size: 14px;
             color: #7f8c8d;
         }
+        
+        @keyframes fadeInSlide {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        #streamingMessages {
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e0 transparent;
+        }
+        
+        #streamingMessages::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        #streamingMessages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        #streamingMessages::-webkit-scrollbar-thumb {
+            background: #cbd5e0;
+            border-radius: 3px;
+        }
     </style>
+
 </head>
 <body>
     <div class="container">
@@ -908,14 +1199,16 @@
         </div>
         
         <div class="main-content">
-            <!-- Left Column: Sidebar -->
+            <!-- Left Column: Request Form -->
             <div class="sidebar">
                 <h2 style="margin-bottom: 20px;">📋 New Request</h2>
                 
                 <form id="requestForm">
                     <div class="form-group">
                         <label for="partNumber">Part Number</label>
-                        <input type="text" id="partNumber" value="HYDRAULIC-PUMP-HP450" required>
+                        <select id="partNumber" required>
+                            <option value="">Select part number...</option>
+                        </select>
                     </div>
                     
                     <div class="form-group">
@@ -926,19 +1219,14 @@
                     <div class="form-group">
                         <label for="destination">Destination</label>
                         <select id="destination" required>
-                            <option value="Production Line A">Production Line A</option>
-                            <option value="Production Line B">Production Line B</option>
-                            <option value="Assembly Station 1">Assembly Station 1</option>
-                            <option value="Assembly Station 2">Assembly Station 2</option>
+                            <option value="">Select destination...</option>
                         </select>
                     </div>
                     
                     <div class="form-group">
                         <label for="priority">Priority</label>
                         <select id="priority">
-                            <option value="Standard">Standard</option>
-                            <option value="High">High</option>
-                            <option value="Critical">Critical</option>
+                            <option value="">Select priority...</option>
                         </select>
                     </div>
                     
@@ -947,84 +1235,118 @@
                         <textarea id="reason" rows="3">Regular production maintenance replacement</textarea>
                     </div>
                     
-                    <button type="submit" class="btn" id="submitBtn">🚀 Start Workflow</button>
+                    <button type="submit" class="btn" id="submitBtn">🚀 Submit Request</button>
                 </form>
             </div>
             
-            <!-- Middle Column: Workflow Area -->
-            <div class="workflow-area">
+            <!-- Right Column: Results Area -->
+            <div class="results-area">
                 <div id="welcomeSection">
                     <h2>🎯 Welcome to AI Manufacturing Logistics</h2>
-                    <p style="margin: 15px 0;">👈 <strong>Use the sidebar</strong> to create a new manufacturing part request.</p>
+                    <p style="margin: 15px 0;">👈 <strong>Use the form</strong> to create a new manufacturing part request.</p>
                 </div>
                 
                 <div id="workflowSection" class="hidden">
-                    <div class="step-progress">
-                        <div class="step waiting" id="step1">
-                            <div>🔍</div>
-                            <div>Analysis</div>
-                        </div>
-                        <div class="step waiting" id="step2">
-                            <div>📦</div>
-                            <div>Inventory</div>
-                        </div>
-                        <div class="step waiting" id="step3">
-                            <div>🚛</div>
-                            <div>Fleet</div>
-                        </div>
-                        <div class="step waiting" id="step4">
-                            <div>💰</div>
-                            <div>Cost</div>
-                        </div>
-                        <div class="step waiting" id="step5">
-                            <div>🤖</div>
-                            <div>AGV Dispatch</div>
-                        </div>
-                        <div class="step waiting" id="step6">
-                            <div>📋</div>
-                            <div>Pickup</div>
-                        </div>
-                        <div class="step waiting" id="step7">
-                            <div>🎯</div>
-                            <div>Delivery</div>
-                        </div>
-                    </div>
-                    
                     <div id="statusDisplay" class="status-display status-info">
-                        Starting workflow...
+                        Processing request...
                     </div>
                     
-                    <div id="progressSection" class="hidden">
-                        <div id="progressLabel">Processing...</div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" id="progressBar"></div>
+                    <!-- Approval Panel (hidden by default) -->
+                    <div id="approvalPanel" style="display: none; margin: 20px 0; padding: 20px; border: 2px solid #f59e0b; border-radius: 8px; background: #fef3c7;">
+                        <h3 style="color: #92400e; margin: 0 0 15px 0;">⚖️ Manual Approval Required</h3>
+                        <div id="approvalDetails" style="margin-bottom: 15px; font-weight: bold; color: #92400e;"></div>
+                        <div style="margin-bottom: 15px;">
+                            <label for="approvalReason" style="display: block; margin-bottom: 5px; font-weight: bold;">Reason (optional):</label>
+                            <input type="text" id="approvalReason" placeholder="Enter approval/rejection reason..." style="width: 100%; padding: 8px; border: 1px solid #d97706; border-radius: 4px;">
                         </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button id="approveBtn" onclick="handleApproval('approve')" style="
+                                padding: 10px 20px;
+                                background: #10b981;
+                                color: white;
+                                border: none;
+                                border-radius: 6px;
+                                cursor: pointer;
+                                font-weight: bold;
+                            ">✅ Approve Request</button>
+                            <button id="rejectBtn" onclick="handleApproval('reject')" style="
+                                padding: 10px 20px;
+                                background: #ef4444;
+                                color: white;
+                                border: none;
+                                border-radius: 6px;
+                                cursor: pointer;
+                                font-weight: bold;
+                            ">❌ Reject Request</button>
+                        </div>
+                    </div>
+                    
+                    <!-- LLM Response Area -->
+                    <div id="llmResponseArea" style="margin: 20px 0;">
+                        <h3>🤖 AI Analysis & Recommendations 
+                            <button onclick="testLLMDisplay()" style="font-size: 12px; margin-left: 10px; padding: 4px 8px;">Test</button>
+                        </h3>
+                        <div id="llmResponse" style="
+                            width: 100%;
+                            min-height: 200px;
+                            padding: 20px;
+                            border: 2px solid #3b82f6;
+                            border-radius: 8px;
+                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                            font-size: 14px;
+                            line-height: 1.6;
+                            background: #f0f9ff;
+                            color: #1e40af;
+                            white-space: pre-wrap;
+                        ">Waiting for AI analysis...</div>
+                    </div>
+
+                    <!-- Action Log Area -->
+                    <div id="actionLogArea" style="margin: 20px 0;">
+                        <h3>⚙️ Agent Actions</h3>
+                        <textarea id="streamingMessages" readonly style="
+                            width: 100%;
+                            height: 250px;
+                            padding: 15px;
+                            border: 2px solid #e0e0e0;
+                            border-radius: 8px;
+                            font-family: 'Courier New', monospace;
+                            font-size: 12px;
+                            background: #f8f9fa;
+                            color: #333;
+                            resize: vertical;
+                            white-space: pre-wrap;
+                        " placeholder="Waiting for agent activity..."></textarea>
                     </div>
                     
                     <div id="analysisResults" class="hidden">
                         <h3>📋 Analysis Results</h3>
                         <div class="result-grid">
                             <div class="result-card">
-                                <h3>📦 Inventory Status</h3>
-                                <div id="inventoryInfo"></div>
+                                <h3>📦 Inventory Agent Response</h3>
+                                <div id="inventoryResponse"></div>
                             </div>
                             <div class="result-card">
-                                <h3>🚛 Fleet Status</h3>
-                                <div id="fleetInfo"></div>
+                                <h3>� Fleet Agent Response</h3>
+                                <div id="fleetResponse"></div>
                             </div>
                             <div class="result-card">
-                                <h3>💰 Cost Breakdown</h3>
-                                <div id="costInfo"></div>
+                                <h3>⚖️ Approval Agent Response</h3>
+                                <div id="approvalResponse"></div>
+                            </div>
+                            <div class="result-card">
+                                <h3>🤖 Orchestrator Summary</h3>
+                                <div id="orchestratorResponse"></div>
                             </div>
                         </div>
                     </div>
                     
                     <div id="approvalSection" class="hidden">
                         <div class="approval-section">
-                            <h3>⚖️ Supervisor Approval Required</h3>
-                            <p id="approvalSummary">Review the analysis results and make an approval decision.</p>
+                            <h3>⚖️ High Cost - Supervisor Approval Required</h3>
+                            <p id="approvalSummary">This request requires supervisor approval due to high cost.</p>
                             <div class="approval-buttons">
-                                <button class="btn btn-approve" id="approveBtn">✅ Approve & Start AGV</button>
+                                <button class="btn btn-approve" id="approveBtn">✅ Approve Request</button>
                                 <button class="btn btn-reject" id="rejectBtn">❌ Reject Request</button>
                             </div>
                         </div>
@@ -1032,47 +1354,11 @@
                     
                     <div id="completionSection" class="hidden">
                         <div class="result-card" style="margin-top: 1.5rem; border: 2px solid #10b981; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);">
-                            <h3>🎉 Workflow Completed Successfully!</h3>
-                            <div class="metric-grid">
-                                <div class="metric">
-                                    <div class="metric-value" id="totalTime" style="color: #10b981;">--</div>
-                                    <div class="metric-label">Total Time</div>
-                                </div>
-                                <div class="metric">
-                                    <div class="metric-value" id="agvUsed" style="color: #10b981;">--</div>
-                                    <div class="metric-label">AGV Used</div>
-                                </div>
-                                <div class="metric">
-                                    <div class="metric-value" id="finalCost" style="color: #10b981;">--</div>
-                                    <div class="metric-label">Final Cost</div>
-                                </div>
-                            </div>
-                            <div style="margin-top: 1rem; padding: 1rem; background: rgba(16, 185, 129, 0.1); border-radius: 0.5rem; border: 1px solid rgba(16, 185, 129, 0.2);">
-                                <p style="color: #065f46; font-weight: 500; margin: 0;">
-                                    💡 <strong>Ready for new request</strong> - All workflow information will remain visible until you submit a new request using the sidebar.
-                                </p>
+                            <h3>🎉 Request Processed Successfully!</h3>
+                            <div id="finalSummary">
+                                <!-- Final summary will be shown here -->
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Right Column: Agent Messages Section -->
-            <div class="agent-logs-section">
-                <div class="agent-logs-header">
-                    <h2>💬 Agent Messages</h2>
-                    <p>Live communication feed</p>
-                </div>
-                
-                <div id="currentActivity" class="current-activity" style="display: none;">
-                    <!-- Current agent activity will be shown here -->
-                </div>
-                
-                <div id="agentLogs" class="agent-logs-container">
-                    <div class="no-activity">
-                        <div class="no-activity-icon">💭</div>
-                        <p>No agent messages yet</p>
-                        <small>Submit a request to see AI agent communications</small>
                     </div>
                 </div>
             </div>
@@ -1080,8 +1366,10 @@
     </div>
 
     <script>
-        let pollInterval = null;
-        let workflowStartTime = null;
+
+        // Global variables for streaming
+        let eventSource = null;
+        let streamingMessages = [];
         
         document.getElementById('requestForm').addEventListener('submit', function(e) {
             e.preventDefault();
@@ -1097,7 +1385,7 @@
         });
         
         function submitRequest() {
-            // Clear previous workflow results first
+            // Clear previous results first
             clearPreviousResults();
             
             const formData = {
@@ -1114,18 +1402,16 @@
             document.getElementById('workflowSection').classList.remove('hidden');
             document.getElementById('submitBtn').disabled = true;
             
-            // Reset button text and style
             const submitBtn = document.getElementById('submitBtn');
-            submitBtn.textContent = '🚀 Start Workflow';
-            submitBtn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            submitBtn.textContent = '⏳ Processing...';
             
             workflowStartTime = Date.now();
             
-            // Update status
-            updateStatus('Running pre-approval analysis...', 'info');
+            // Start streaming
+            startStreaming();
             
-            // Start polling for status updates
-            startPolling();
+            // Update status
+            updateStatus('🚀 Starting AI analysis...', 'info');
             
             fetch('/api/submit_request', {
                 method: 'POST',
@@ -1136,72 +1422,809 @@
             })
             .then(response => response.json())
             .then(data => {
-                if (data.success) {
-                    displayAnalysisResults(data.results);
-                } else {
+                if (!data.success) {
                     updateStatus('Error: ' + data.error, 'error');
+                    stopStreaming();
                 }
             })
             .catch(error => {
                 updateStatus('Network error: ' + error, 'error');
+                stopStreaming();
             });
         }
         
-        function approveRequest() {
-            updateStatus('Request approved! Starting AGV workflow...', 'success');
-            // Hide approval section but keep analysis results visible
-            document.getElementById('approvalSection').classList.add('hidden');
-            document.getElementById('approvalSection').style.display = 'none';
-            document.getElementById('progressSection').classList.remove('hidden');
+        function startStreaming() {
+            // Close existing stream
+            if (eventSource) {
+                eventSource.close();
+            }
             
-            fetch('/api/approve_request', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
+            // Clear and initialize both areas
+            const actionLog = document.getElementById('streamingMessages');
+            if (actionLog) {
+                actionLog.value = `=== Agent Activity Log Started at ${new Date().toLocaleTimeString()} ===\n`;
+            }
+            
+            const llmArea = document.getElementById('llmResponse');
+            if (llmArea) {
+                llmArea.innerHTML = '🤖 Waiting for AI analysis...';
+            }
+            
+            // Start new EventSource for streaming
+            eventSource = new EventSource('/api/stream');
+            
+            eventSource.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    console.log('📥 Received message:', data); // Debug
+                    
+                    if (data.type === 'status') {
+                        // Final status received
+                        console.log('🏁 Final status received:', data.status);
+                        handleFinalResults(data);
+                        stopStreaming();
+                    } else if (data.type === 'connection') {
+                        console.log('🔗 [Orchestrator] Stream connected:', data.content);
+                        updateStatus('🔄 Agent orchestrator started...', 'info');
+                        displayStreamingMessage({
+                            agent: 'Orchestrator',
+                            message: data.content,
+                            message_type: 'system',
+                            timestamp: data.timestamp
+                        });
+                    } else if (data.type === 'agent_event') {
+                        // Main agent events - like async for event in stream
+                        console.log('� Agent event received:', data);
+                        displayStreamingMessage({
+                            agent: data.agent,
+                            message: data.content,
+                            message_type: data.message_type,
+                            timestamp: data.timestamp
+                        });
+                    } else if (data.type === 'completion') {
+                        console.log('✅ [Orchestrator] Task complete:', data);
+                        updateStatus('✅ Analysis complete!', 'success');
+                        displayStreamingMessage({
+                            agent: 'Orchestrator',
+                            message: data.content,
+                            message_type: 'completion',
+                            timestamp: data.timestamp
+                        });
+                        if (data.results) {
+                            displayResults(data.results);
+                        }
+                        
+                        // Reset the submit button
+                        const submitButton = document.querySelector('button[type="submit"]');
+                        if (submitButton) {
+                            submitButton.textContent = 'Submit Request';
+                            submitButton.disabled = false;
+                        }
+                        
+                        stopStreaming();
+                    } else if (data.type === 'heartbeat') {
+                        console.log('💓 Heartbeat:', data.content || 'Connection active');
+                    } else if (data.type === 'error') {
+                        console.error('❌ Stream error:', data.content);
+                        updateStatus('❌ Stream error: ' + data.content, 'error');
+                        displayStreamingMessage({
+                            agent: 'System',
+                            message: data.content,
+                            message_type: 'error',
+                            timestamp: data.timestamp
+                        });
+                        stopStreaming();
+                    } else {
+                        // Fallback for any other message format
+                        console.log('🔄 Processing message:', data);
+                        displayStreamingMessage(data);
+                    }
+                } catch (e) {
+                    console.error('Error parsing streaming data:', e, 'Raw data:', event.data);
                 }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    updateStatus('AGV workflow in progress...', 'info');
+            };
+            
+            eventSource.onopen = function(event) {
+                console.log('✅ Streaming connection established');
+                updateStatus('🔄 Connected to agent processing stream...', 'info');
+            };
+            
+            eventSource.onerror = function(event) {
+                console.error('❌ Streaming connection error:', event);
+                
+                if (eventSource.readyState === EventSource.CONNECTING) {
+                    console.log('🔄 Attempting to reconnect...');
+                    updateStatus('🔄 Reconnecting to agent stream...', 'warning');
+                } else if (eventSource.readyState === EventSource.CLOSED) {
+                    console.log('❌ Stream connection closed');
+                    updateStatus('❌ Connection lost - please refresh page', 'error');
+                    stopStreaming();
                 } else {
-                    updateStatus('Error: ' + data.error, 'error');
+                    updateStatus('⚠️ Connection issue - retrying...', 'warning');
                 }
-            });
+            };
         }
         
-        function rejectRequest() {
-            fetch('/api/reject_request', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                updateStatus('Request rejected by supervisor', 'error');
-                stopPolling();
-                resetForm();
-            });
-        }
-        
-        function startPolling() {
-            pollInterval = setInterval(checkWorkflowStatus, 500);
-        }
-        
-        function stopPolling() {
-            if (pollInterval) {
-                clearInterval(pollInterval);
-                pollInterval = null;
+        function stopStreaming() {
+            if (eventSource) {
+                eventSource.close();
+                eventSource = null;
             }
         }
         
-        function checkWorkflowStatus() {
-            fetch('/api/workflow_status')
-                .then(response => response.json())
-                .then(data => {
-                    updateWorkflowDisplay(data);
+        function displayStreamingMessage(message) {
+            console.log('🎯 displayStreamingMessage called with:', message);
+            
+            // Add message to streaming display area
+            addStreamingMessageToDisplay(message);
+            
+            // ALSO add to the simple text area for debugging
+            addToTextArea(message);
+            
+            // Update status based on message
+            updateStatusFromMessage(message);
+        }
+        
+        function addToTextArea(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const agent = message.agent || 'System';
+            const content = message.message || message.content || 'No message';
+            const type = message.message_type || 'info';
+            
+            // Check if this is a final LLM response/summary - be VERY inclusive
+            const isLLMResponse = (
+                // Completion messages from Orchestrator
+                (type === 'completion' && agent === 'Orchestrator') ||
+                // Any long content from Orchestrator 
+                (agent === 'Orchestrator' && content.length > 150) ||
+                // Content with analysis keywords
+                (content.includes('analysis') || content.includes('recommendation') || content.includes('function calls')) ||
+                // Content with tool planning
+                (content.includes('inventory_agent_tool') || content.includes('fleet_agent_tool') || content.includes('approval_agent_tool')) ||
+                // Content that looks like structured responses
+                (content.includes('{"name":') && content.includes('parameters')) ||
+                // Any multi-line orchestrator response
+                (agent === 'Orchestrator' && content.includes('\n') && content.length > 50)
+            );
+            
+            console.log('🔍 LLM Response Check:', {agent, type, contentLength: content.length, isLLMResponse, preview: content.substring(0, 100)});
+            
+            if (isLLMResponse) {
+                // This is the main LLM response - put it in the response area
+                const llmArea = document.getElementById('llmResponse');
+                if (llmArea) {
+                    // Format the content nicely
+                    let formattedContent = content;
+                    
+                    // Clean up JSON formatting for better readability
+                    if (content.includes('```json')) {
+                        formattedContent = content.replace(/```json/g, '\n--- Tool Call ---\n');
+                        formattedContent = formattedContent.replace(/```/g, '\n--- End Tool Call ---\n');
+                    }
+                    
+                    llmArea.innerHTML = `<strong>🤖 AI Analysis & Recommendations:</strong><br><br>${formattedContent}`;
+                    llmArea.style.border = '2px solid #10b981'; // Green border when populated
+                }
+            }
+            
+            // Always add to action log (except long completion messages)
+            const actionLog = document.getElementById('streamingMessages');
+            if (actionLog) {
+                let logLine;
+                if (type === 'completion' && content.length > 100) {
+                    logLine = `[${timestamp}] ${agent}: ✅ Analysis complete - see results above\n`;
+                } else {
+                    logLine = `[${timestamp}] ${agent}: ${content}\n`;
+                }
+                
+                actionLog.value += logLine;
+                actionLog.scrollTop = actionLog.scrollHeight;
+            }
+        }
+        
+        function addStreamingMessageToDisplay(message) {
+            // Create or get streaming messages container
+            let streamingContainer = document.getElementById('streamingMessages');
+            if (!streamingContainer) {
+                streamingContainer = document.createElement('div');
+                streamingContainer.id = 'streamingMessages';
+                streamingContainer.innerHTML = '<h3>🔄 Live Agent Processing</h3>';
+                streamingContainer.style.cssText = `
+                    background: #f8fafc;
+                    padding: 1rem;
+                    border-radius: 0.5rem;
+                    margin-bottom: 1rem;
+                    border-left: 4px solid #3b82f6;
+                    max-height: 400px;
+                    overflow-y: auto;
+                `;
+                
+                // Insert before results
+                const resultsArea = document.querySelector('.results-area');
+                const statusDisplay = document.getElementById('statusDisplay');
+                resultsArea.insertBefore(streamingContainer, statusDisplay.nextSibling);
+            }
+            
+            // Get message type styling
+            const messageStyle = getMessageTypeStyle(message.message_type || 'info');
+            
+            // Create message element
+            const messageEl = document.createElement('div');
+            messageEl.style.cssText = `
+                padding: 0.5rem 0.75rem;
+                margin: 0.25rem 0;
+                background: ${messageStyle.background};
+                border-radius: 0.375rem;
+                border-left: 4px solid ${messageStyle.borderColor};
+                animation: fadeInSlide 0.3s ease-out;
+                ${messageStyle.extra || ''}
+            `;
+            
+            const icon = getMessageIcon(message.message_type || 'info');
+            
+            messageEl.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+                    <strong style="color: ${getAgentColor(message.agent)}; font-size: 0.875rem;">
+                        ${icon} ${message.agent}
+                    </strong>
+                    <span style="font-size: 0.75rem; color: #6b7280;">${new Date(message.timestamp).toLocaleTimeString()}</span>
+                </div>
+                <div style="color: #374151; font-size: 0.875rem; ${messageStyle.textStyle || ''}">${message.message}</div>
+            `;
+            
+            streamingContainer.appendChild(messageEl);
+            
+            // Auto-scroll to bottom
+            streamingContainer.scrollTop = streamingContainer.scrollHeight;
+        }
+        
+        function getMessageTypeStyle(messageType) {
+            const styles = {
+                'tool': {
+                    background: '#fef3c7',
+                    borderColor: '#f59e0b',
+                    textStyle: 'font-weight: 600;'
+                },
+                'llm_response': {
+                    background: '#dbeafe',
+                    borderColor: '#3b82f6',
+                    textStyle: 'font-style: italic;'
+                },
+                'network': {
+                    background: '#f3f4f6',
+                    borderColor: '#6b7280',
+                    textStyle: 'font-family: monospace; font-size: 0.8rem;'
+                },
+                'system': {
+                    background: '#e0e7ff',
+                    borderColor: '#6366f1',
+                    textStyle: 'font-weight: 500;'
+                },
+                'completion': {
+                    background: '#dcfce7',
+                    borderColor: '#22c55e',
+                    textStyle: 'font-weight: 600;'
+                },
+                'error': {
+                    background: '#fee2e2',
+                    borderColor: '#ef4444',
+                    textStyle: 'font-weight: 500; color: #dc2626;'
+                },
+                'data': {
+                    background: '#f0f9ff',
+                    borderColor: '#0ea5e9',
+                    textStyle: 'font-family: monospace; font-size: 0.85rem;'
+                },
+                'detail': {
+                    background: '#ecfdf5',
+                    borderColor: '#10b981',
+                    textStyle: ''
+                },
+                'info': {
+                    background: 'white',
+                    borderColor: '#e5e7eb',
+                    textStyle: ''
+                }
+            };
+            return styles[messageType] || styles['info'];
+        }
+        
+        function getMessageIcon(messageType) {
+            const icons = {
+                'tool': '🔧',
+                'llm_response': '🤖',
+                'network': '🌐',
+                'system': '⚙️',
+                'completion': '✅',
+                'error': '❌',
+                'data': '📊',
+                'detail': '📋',
+                'info': '💬'
+            };
+            return icons[messageType] || '💬';
+        }
+        
+        function getAgentColor(agent) {
+            const colors = {
+                'System': '#6b7280',
+                'Orchestrator': '#ef4444',
+                'Inventory Agent': '#10b981',
+                'Fleet Agent': '#f59e0b',
+                'Approval Agent': '#8b5cf6'
+            };
+            return colors[agent] || '#3b82f6';
+        }
+        
+        function updateStatusFromMessage(message) {
+            const statusMessages = {
+                'System': {
+                    'Starting logistics analysis...': 'Initializing AI agents...',
+                    'Initializing AI agents...': 'Setting up analysis environment...',
+                    'All processing completed': 'Analysis completed successfully!'
+                },
+                'Orchestrator': {
+                    'Processing request': 'AI orchestrator analyzing request...',
+                    'Running comprehensive analysis...': 'Deep analysis in progress...',
+                    'Analysis completed successfully': 'Orchestrator analysis complete'
+                },
+                'Inventory Agent': {
+                    'Checking inventory availability...': '📦 Checking inventory levels...'
+                },
+                'Fleet Agent': {
+                    'Analyzing delivery capacity...': '🚛 Analyzing fleet availability...'
+                },
+                'Approval Agent': {
+                    'High-value request detected': '⚖️ High-cost approval required...'
+                }
+            };
+            
+            const agentMessages = statusMessages[message.agent];
+            if (agentMessages) {
+                for (const [key, status] of Object.entries(agentMessages)) {
+                    if (message.message.includes(key)) {
+                        updateStatus(status, 'info');
+                        break;
+                    }
+                }
+            }
+        }
+        
+        function handleFinalResults(data) {
+            // Hide streaming container
+            const streamingContainer = document.getElementById('streamingMessages');
+            if (streamingContainer) {
+                streamingContainer.style.transition = 'opacity 0.5s ease';
+                streamingContainer.style.opacity = '0.5';
+            }
+            
+            if (data.results) {
+                displayAnalysisResults(data.results);
+            }
+            
+            updateStatus('✅ Analysis completed!', 'success');
+        }
+        
+        function clearPreviousResults() {
+            // Clear previous streaming messages
+            const streamingContainer = document.getElementById('streamingMessages');
+            if (streamingContainer) {
+                streamingContainer.remove();
+            }
+            
+            // Hide results sections
+            document.getElementById('analysisResults').classList.add('hidden');
+            document.getElementById('approvalSection').classList.add('hidden');
+            document.getElementById('completionSection').classList.add('hidden');
+            
+            // Clear message arrays
+            streamingMessages = [];
+        }
+        
+        function approveRequest() {
+            updateStatus('✅ Request approved and processed!', 'success');
+            
+            // Hide approval section
+            document.getElementById('approvalSection').classList.add('hidden');
+            
+            // Show completion
+            const results = window.lastResults || {};
+            const cost = window.lastCost || 0;
+            showCompletionWithSummary(results, cost);
+        }
+        
+        function rejectRequest() {
+            updateStatus('❌ Request rejected by supervisor', 'error');
+            
+            // Hide approval section
+            document.getElementById('approvalSection').classList.add('hidden');
+            
+            // Enable form for new request
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = false;
+            submitBtn.textContent = '🚀 Submit New Request';
+        }
+        
+
+        
+        function handleRealtimeEvent(eventData) {
+            
+            switch(eventData.type) {
+                case 'connected':
+                    break;
+                    
+                case 'workflow_update':
+                    updateWorkflowFromEvent(eventData);
+                    break;
+                    
+                case 'agent_message':
+                    displayNewAgentMessage(eventData.log);
+                    syncStepWithAgentMessage(eventData.log);
+                    break;
+                    
+                case 'workflow_complete':
+                    handleWorkflowCompletion();
+                    stopRealTimeUpdates();
+                    break;
+                    
+                case 'error':
+                    break;
+                    
+                default:
+            }
+        }
+        
+        function updateWorkflowFromEvent(eventData) {
+            // Create a status object from the event data
+            const status = {
+                status: eventData.status,
+                step: eventData.step,
+                phase: eventData.phase,
+                agent_activity: eventData.agent_activity
+            };
+
+            // Expose latest workflow info for debugging & synchronization checks
+            try {
+                window.latestWorkflowStatus = status.status;
+                window.latestWorkflowStep = typeof status.step === 'number' ? status.step : (window.latestWorkflowStep || 0);
+            } catch (e) {
+                // ignore in restricted environments
+            }
+            
+            // Update step progress
+            updateStepProgress(status);
+            
+            // Update agent activity
+            if (status.agent_activity) {
+                updateAgentActivity(status.agent_activity);
+            }
+            
+            // Update status message based on current state
+            switch(status.status) {
+                case 'analyzing':
+                    updateStatus('🤖 AI agents analyzing request...', 'info');
+                    break;
+                case 'awaiting_approval':
+                    updateStatus('✅ Analysis complete. Awaiting supervisor approval.', 'warning');
+                    break;
+                case 'agv_dispatch_phase1':
+                    updateStatus('🚀 AGV Dispatch - Phase 1: Preparing AGV for dispatch...', 'info');
+                    updateProgress('AGV Dispatch - Phase 1', 10);
+                    break;
+                case 'agv_dispatch_phase2':
+                    updateStatus('🤖 AGV Dispatch - Phase 2: AGV navigating to pickup point...', 'info');
+                    updateProgress('AGV Dispatch - Phase 2', 30);
+                    break;
+                case 'material_pickup_phase1':
+                    updateStatus('📦 Material Pickup - Phase 1: Loading materials...', 'info');
+                    updateProgress('Material Pickup - Phase 1', 50);
+                    break;
+                case 'material_pickup_phase2':
+                    updateStatus('✅ Material Pickup - Phase 2: Securing materials...', 'info');
+                    updateProgress('Material Pickup - Phase 2', 80);
+                    break;
+                case 'delivery':
+                    updateStatus('🎯 Final Delivery: AGV delivering to destination...', 'info');
+                    updateProgress('Delivery in Progress', 95);
+                    break;
+                case 'completed':
+                    updateStatus('✅ Workflow completed successfully!', 'success');
+                    // Don't automatically stop here, let the workflow_complete event handle it
+                    break;
+                case 'error':
+                    updateStatus('❌ Workflow error occurred', 'error');
+                    stopRealTimeUpdates();
+                    break;
+            }
+        }
+        
+        function displayNewAgentMessage(logEntry) {
+            // Display a single new agent message immediately
+            
+            if (!logEntry) {
+                return;
+            }
+            
+            // Debug: show incoming log step vs latest workflow step
+            try {
+                console.log('📊 Agent message:', {
+                    agent: logEntry.agent, 
+                    step: logEntry.step, 
+                    message: logEntry.message, 
+                    timestamp: logEntry.timestamp,
+                    latestWorkflowStep: window.latestWorkflowStep
                 });
+            } catch (e) {
+                // Ignore debug errors
+            }
+            
+            const agentLogsContainer = document.getElementById('agentLogs');
+            
+            // Hide "no activity" message when we have logs
+            const noActivity = agentLogsContainer.querySelector('.no-activity');
+            if (noActivity) {
+                noActivity.remove();
+            }
+            
+            const logDiv = document.createElement('div');
+            
+            // Add agent-specific CSS classes
+            const agentClass = logEntry.agent.toLowerCase().replace(/\s+/g, '-');
+            logDiv.className = `agent-log ${agentClass} new-message`;
+            
+            logDiv.innerHTML = `
+                <div class="agent-header">
+                    <span class="agent-name ${agentClass}">${logEntry.agent}</span>
+                    <span class="agent-timestamp">${logEntry.timestamp}</span>
+                </div>
+                <div class="agent-message">${logEntry.message}</div>
+            `;
+            
+            // Add smooth entrance animation with glow effect
+            logDiv.style.opacity = '0';
+            logDiv.style.transform = 'translateX(20px)';
+            agentLogsContainer.appendChild(logDiv);
+            
+            // Add new message indicator flash
+            showNewMessageIndicator(logEntry.agent);
+            
+            // Trigger animation
+            setTimeout(() => {
+                logDiv.style.transition = 'all 0.3s ease-out';
+                logDiv.style.opacity = '1';
+                logDiv.style.transform = 'translateX(0)';
+                
+                // Add new message glow
+                logDiv.style.boxShadow = '0 0 15px rgba(102, 126, 234, 0.4)';
+                setTimeout(() => {
+                    logDiv.style.boxShadow = '';
+                    logDiv.classList.remove('new-message');
+                }, 1500);
+            }, 10);
+            
+            // Update message counter
+            totalMessageCount++;
+            updateMessageCounter();
+            
+            // Smooth auto-scroll to bottom
+            setTimeout(() => {
+                agentLogsContainer.scrollTo({
+                    top: agentLogsContainer.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }, 100);
+        }
+        
+        function showNewMessageIndicator(agentName) {
+            // Show a brief flash indicator for new messages
+            const messageCounter = document.getElementById('messageCounter');
+            const originalText = messageCounter.textContent;
+            
+            messageCounter.style.color = '#10b981';
+            messageCounter.style.fontWeight = '600';
+            messageCounter.textContent = `📨 New from ${agentName}`;
+            
+            setTimeout(() => {
+                messageCounter.style.color = '';
+                messageCounter.style.fontWeight = '';
+                updateMessageCounter();
+            }, 1200);
+        }
+        
+        function syncStepWithAgentMessage(logEntry) {
+            // Synchronize step progress indicators with agent messages
+            if (!logEntry || !logEntry.step) return;
+            
+            const stepNum = logEntry.step;
+            const agent = logEntry.agent.toLowerCase();
+            
+            // Step mapping based on workflow phases and agent activities
+            let targetStep = stepNum;
+            
+            // Map agent messages to appropriate workflow steps
+            if (agent.includes('inventory') || logEntry.message.toLowerCase().includes('inventory')) {
+                targetStep = 2; // Inventory step
+            } else if (agent.includes('fleet') || logEntry.message.toLowerCase().includes('fleet')) {
+                targetStep = 3; // Fleet step  
+            } else if (agent.includes('approver') || logEntry.message.toLowerCase().includes('approval')) {
+                targetStep = 4; // Cost/Approval step
+            } else if (agent.includes('agv') || logEntry.message.toLowerCase().includes('agv')) {
+                // AGV messages map to steps 5-7 based on content
+                if (logEntry.message.toLowerCase().includes('dispatch') || logEntry.message.toLowerCase().includes('accepting')) {
+                    targetStep = 5; // AGV Dispatch
+                } else if (logEntry.message.toLowerCase().includes('pickup') || logEntry.message.toLowerCase().includes('loading')) {
+                    targetStep = 6; // Pickup
+                } else if (logEntry.message.toLowerCase().includes('delivery') || logEntry.message.toLowerCase().includes('completed')) {
+                    targetStep = 7; // Delivery
+                }
+            } else if (agent.includes('orchestrator') || agent.includes('logistics')) {
+                targetStep = 1; // Analysis step
+            }
+            
+            // Animate and update the corresponding step
+            animateStepProgress(targetStep, logEntry);
+            
+            // Mark previous steps as completed with delay for visual flow
+            setTimeout(() => {
+                for (let i = 1; i < targetStep; i++) {
+                    const prevStep = document.getElementById('step' + i);
+                    if (prevStep && !prevStep.classList.contains('completed')) {
+                        prevStep.className = 'step completed';
+                        // Add completion pulse animation
+                        prevStep.style.animation = 'completionPulse 0.6s ease-out';
+                        setTimeout(() => {
+                            prevStep.style.animation = '';
+                        }, 600);
+                    }
+                }
+            }, 200);
+        }
+        
+        function animateStepProgress(stepNumber, logEntry) {
+            const stepElement = document.getElementById('step' + stepNumber);
+            if (!stepElement) return;
+            
+            // Determine step state based on message content and agent
+            let stepState = 'active';
+            const message = logEntry.message.toLowerCase();
+            const agent = logEntry.agent.toLowerCase();
+            
+            // Check for completion indicators
+            if (message.includes('completed') || message.includes('success') || message.includes('✅')) {
+                stepState = 'completed';
+            }
+            // Check for error indicators  
+            else if (message.includes('error') || message.includes('failed') || message.includes('❌')) {
+                stepState = 'error';
+            }
+            // Check for warning indicators
+            else if (message.includes('warning') || message.includes('partial') || message.includes('⚠️')) {
+                stepState = 'warning';
+            }
+            
+            // Apply the state with animation
+            stepElement.className = `step ${stepState}`;
+            
+            // Add message-triggered animation based on state
+            switch(stepState) {
+                case 'active':
+                    stepElement.style.animation = 'stepActivation 0.8s ease-out';
+                    // Add pulsing for active steps
+                    setTimeout(() => {
+                        if (stepElement.classList.contains('active')) {
+                            stepElement.style.animation = 'activePulse 2s ease-in-out infinite';
+                        }
+                    }, 800);
+                    break;
+                    
+                case 'completed':
+                    stepElement.style.animation = 'stepCompletion 0.6s ease-out';
+                    setTimeout(() => {
+                        stepElement.style.animation = '';
+                    }, 600);
+                    break;
+                    
+                case 'error':
+                    stepElement.style.animation = 'stepError 0.5s ease-in-out';
+                    setTimeout(() => {
+                        stepElement.style.animation = '';
+                    }, 500);
+                    break;
+                    
+                case 'warning':
+                    stepElement.style.animation = 'stepWarning 1s ease-in-out';
+                    setTimeout(() => {
+                        if (stepElement.classList.contains('warning')) {
+                            stepElement.style.animation = 'warningPulse 1.5s ease-in-out infinite';
+                        }
+                    }, 1000);
+                    break;
+            }
+            
+            // Add a subtle border flash to indicate message sync
+            stepElement.style.boxShadow = '0 0 20px rgba(102, 126, 234, 0.6)';
+            setTimeout(() => {
+                stepElement.style.boxShadow = '';
+            }, 300);
+            
+            // Update progress line
+            updateProgressLine();
+            
+            console.log(`🎯 Step ${stepNumber} synced with ${logEntry.agent}: ${stepState}`);
+        }
+        
+        function updateProgressLine() {
+            // Calculate progress based on completed and active steps
+            let completedSteps = 0;
+            let activeStep = 0;
+            
+            for (let i = 1; i <= 7; i++) {
+                const step = document.getElementById('step' + i);
+                if (step.classList.contains('completed')) {
+                    completedSteps = i;
+                } else if (step.classList.contains('active') && activeStep === 0) {
+                    activeStep = i;
+                    break;
+                }
+            }
+            
+            // Calculate progress percentage
+            let progressPercent = 0;
+            if (completedSteps > 0) {
+                progressPercent = (completedSteps / 7) * 75; // 75% for completed steps
+            } else if (activeStep > 0) {
+                progressPercent = ((activeStep - 1) / 7) * 75 + 10; // Partial progress for active step
+            }
+            
+            // Update the progress line
+            const stepProgress = document.querySelector('.step-progress');
+            if (stepProgress) {
+                stepProgress.style.setProperty('--progress-width', `${progressPercent}%`);
+                
+                // Add CSS custom property for the progress line
+                const style = document.createElement('style');
+                style.textContent = `
+                    .step-progress::after {
+                        width: ${progressPercent}% !important;
+                    }
+                `;
+                
+                // Remove previous progress styles and add new one
+                const existingProgressStyle = document.querySelector('#progress-style');
+                if (existingProgressStyle) {
+                    existingProgressStyle.remove();
+                }
+                style.id = 'progress-style';
+                document.head.appendChild(style);
+            }
+        }
+        
+        function handleWorkflowCompletion() {
+            // Stop all animations and show completed state
+            updateStatus('✅ Workflow completed successfully!', 'success');
+            
+            // Mark all steps as completed
+            for (let i = 1; i <= 7; i++) {
+                document.getElementById('step' + i).className = 'step completed';
+            }
+            
+            // Show completion section
+            const completionSection = document.getElementById('completionSection');
+            if (completionSection) {
+                completionSection.classList.remove('hidden');
+            }
+            
+            // Update current activity to show completion
+            updateAgentActivity('✅ All operations completed successfully - Ready for new request');
+            
+            // Enable submit button for new requests
+            const submitBtn = document.getElementById('submitBtn');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '🚀 Start New Workflow';
+                submitBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+            }
+            
+            console.log('🎯 Workflow completion UI update complete');
         }
         
         function updateWorkflowDisplay(status) {
@@ -1230,6 +2253,10 @@
                     break;
                 case 'awaiting_approval':
                     updateStatus('✅ Analysis complete. Awaiting supervisor approval.', 'warning');
+                    // Show approval section if results are available and not already processed
+                    if (status.results && !approvalProcessed) {
+                        displayAnalysisResults(status.results);
+                    }
                     break;
                 case 'agv_dispatch_phase1':
                     updateStatus('🚀 AGV Dispatch - Phase 1: Preparing AGV for dispatch...', 'info');
@@ -1254,16 +2281,16 @@
                 case 'completed':
                     updateStatus('✅ Workflow completed successfully!', 'success');
                     showCompletion(status);
-                    stopPolling();
+                    stopRealTimeUpdates();
                     break;
                 case 'rejected':
                     updateStatus('❌ Request rejected', 'error');
-                    stopPolling();
+                    stopRealTimeUpdates();
                     resetForm();
                     break;
                 case 'error':
                     updateStatus('❌ Workflow error occurred', 'error');
-                    stopPolling();
+                    stopRealTimeUpdates();
                     break;
             }
         }
@@ -1312,44 +2339,89 @@
         }
         
         function displayAnalysisResults(results) {
-            document.getElementById('inventoryInfo').innerHTML = 
-                `<p><strong>Available:</strong> ${results.inventory.available_quantity} units</p>
-                 <p><strong>Location:</strong> ${results.inventory.warehouse_location}</p>
-                 <p><strong>Status:</strong> ${results.inventory.stock_status}</p>`;
+            // Extract LLM responses from orchestrator result
+            const orchestratorResult = results.orchestrator_result || "Analysis completed";
             
-            document.getElementById('fleetInfo').innerHTML = 
-                `<p><strong>AGV:</strong> ${results.fleet.vehicle_id}</p>
-                 <p><strong>Battery:</strong> ${results.fleet.battery_level}%</p>
-                 <p><strong>Status:</strong> ${results.fleet.availability_status}</p>`;
+            // Display agent responses (the actual LLM outputs)
+            document.getElementById('inventoryResponse').innerHTML = `
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 0.5rem; border-left: 4px solid #10b981;">
+                    <p><strong>📦 Available:</strong> ${results.inventory.available_quantity} units</p>
+                    <p><strong>🏭 Location:</strong> ${results.inventory.warehouse_location}</p>
+                    <p><strong>📊 Status:</strong> ${results.inventory.stock_status}</p>
+                    ${results.inventory.ai_assessment ? `<p style="margin-top: 0.5rem; color: #6b7280;"><em>"${results.inventory.ai_assessment}"</em></p>` : ''}
+                </div>
+            `;
             
-            document.getElementById('costInfo').innerHTML = 
-                `<p><strong>Materials:</strong> $${results.inventory.estimated_cost.toFixed(2)}</p>
-                 <p><strong>Handling:</strong> $45.00</p>
-                 <p><strong>AGV Operation:</strong> $25.00</p>
-                 <p><strong>Total:</strong> $${results.total_cost.toFixed(2)}</p>`;
+            document.getElementById('fleetResponse').innerHTML = `
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 0.5rem; border-left: 4px solid #f59e0b;">
+                    <p><strong>🤖 AGV:</strong> ${results.fleet.vehicle_id}</p>
+                    <p><strong>🔋 Battery:</strong> ${results.fleet.battery_level}%</p>
+                    <p><strong>📍 Status:</strong> ${results.fleet.availability_status}</p>
+                </div>
+            `;
             
-            // Display agent logs if available (show all logs since analysis is complete)
-            if (results.agent_logs) {
-                displayStepBasedAgentLogs(results.agent_logs, 0); // 0 means show all logs
-            }
+            const estimatedCost = results.approval.estimated_cost || 270.0;
+            document.getElementById('approvalResponse').innerHTML = `
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 0.5rem; border-left: 4px solid #8b5cf6;">
+                    <p><strong>💰 Total Cost:</strong> $${estimatedCost.toFixed(2)}</p>
+                    <p><strong>📋 Status:</strong> ${results.approval.status}</p>
+                    <p><strong>⚖️ Recommendation:</strong> ${estimatedCost > 500 ? 'Requires approval due to high cost' : 'Approved for processing'}</p>
+                </div>
+            `;
+            
+            document.getElementById('orchestratorResponse').innerHTML = `
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 0.5rem; border-left: 4px solid #ef4444;">
+                    <p style="color: #374151; line-height: 1.5;">${orchestratorResult.substring(0, 300)}${orchestratorResult.length > 300 ? '...' : ''}</p>
+                </div>
+            `;
             
             document.getElementById('analysisResults').classList.remove('hidden');
-            document.getElementById('approvalSection').classList.remove('hidden');
             
-            // Debug: Force visibility
-            const approvalSection = document.getElementById('approvalSection');
-            approvalSection.style.display = 'block';
+            // Store results for approval functions
+            window.lastResults = results;
+            window.lastCost = estimatedCost;
             
-            document.getElementById('approvalSummary').textContent = 
-                `Total cost for approval: $${results.total_cost.toFixed(2)}`;
+            // Only show approval section if cost is high (>$500)
+            if (estimatedCost > 500) {
+                const approvalSection = document.getElementById('approvalSection');
+                const approvalSummary = document.getElementById('approvalSummary');
                 
-            console.log('Approval section should now be visible');
+                approvalSection.classList.remove('hidden');
+                approvalSummary.innerHTML = `
+                    <strong>High Cost Alert:</strong> This request costs $${estimatedCost.toFixed(2)}, which exceeds the $500 threshold.
+                    <br><span style="font-size: 0.9rem; opacity: 0.9;">Supervisor approval is required before proceeding.</span>
+                `;
+            } else {
+                // Low cost - auto approve and show completion
+                updateStatus('✅ Request approved and processed successfully!', 'success');
+                showCompletionWithSummary(results, estimatedCost);
+            }
         }
         
-        let displayedLogsCount = 0;
-        let displayedStepLogsCount = 0;
+        function showCompletionWithSummary(results, cost) {
+            document.getElementById('completionSection').classList.remove('hidden');
+            document.getElementById('finalSummary').innerHTML = `
+                <p><strong>📦 Part:</strong> ${results.inventory ? 'Ready for delivery' : 'Processing'}</p>
+                <p><strong>🚛 AGV:</strong> ${results.fleet?.vehicle_id || 'Assigned'}</p>
+                <p><strong>💰 Total Cost:</strong> $${cost.toFixed(2)}</p>
+                <p><strong>⏱️ Processing Time:</strong> ${workflowStartTime ? ((Date.now() - workflowStartTime) / 1000).toFixed(1) + 's' : 'Completed'}</p>
+                <div style="margin-top: 1rem; padding: 1rem; background: rgba(16, 185, 129, 0.1); border-radius: 0.5rem;">
+                    <p style="color: #065f46; margin: 0;">Request has been processed successfully and is ready for fulfillment.</p>
+                </div>
+            `;
+            
+            // Enable form for new requests
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = false;
+            submitBtn.textContent = '🚀 Submit New Request';
+        }
+
+
         
-        // New function for step-based agent message display
+        // Simplified global variables
+        let workflowStartTime = null;
+        
+        // Enhanced function for step-based agent message display with modern styling
         function displayStepBasedAgentLogs(logs, currentStep) {
             const agentLogsContainer = document.getElementById('agentLogs');
             
@@ -1363,6 +2435,8 @@
             
             // Only show messages for current step and completed steps
             const visibleLogs = logs.filter(log => {
+                // If debug mode is enabled, show all logs regardless of step
+                if (window._debug_show_all_logs) return true;
                 // Show all logs for steps that are completed (step < currentStep)
                 // or show logs for the current active step
                 return log.step <= currentStep || currentStep === 0; // 0 means ready for approval, show all
@@ -1372,23 +2446,53 @@
             if (visibleLogs && visibleLogs.length > displayedStepLogsCount) {
                 const newLogs = visibleLogs.slice(displayedStepLogsCount);
                 
-                newLogs.forEach(log => {
+                newLogs.forEach((log, index) => {
                     const logDiv = document.createElement('div');
-                    logDiv.className = 'agent-log';
+                    
+                    // Add agent-specific CSS classes
+                    const agentClass = log.agent.toLowerCase().replace(/\s+/g, '-');
+                    logDiv.className = `agent-log ${agentClass}`;
+                    
                     logDiv.innerHTML = `
                         <div class="agent-header">
-                            <span class="agent-name">${log.agent}</span>
+                            <span class="agent-name ${agentClass}">${log.agent}</span>
                             <span class="agent-timestamp">${log.timestamp}</span>
                         </div>
                         <div class="agent-message">${log.message}</div>
                     `;
+                    
+                    // Add smooth entrance animation with staggered delay
+                    logDiv.style.opacity = '0';
+                    logDiv.style.transform = 'translateX(20px)';
                     agentLogsContainer.appendChild(logDiv);
+                    
+                    // Trigger animation with delay for each message
+                    setTimeout(() => {
+                        logDiv.style.transition = 'all 0.2s ease-out';
+                        logDiv.style.opacity = '1';
+                        logDiv.style.transform = 'translateX(0)';
+                        
+                        // Sync step progress with each message (with slight delay)
+                        setTimeout(() => {
+                            syncStepWithAgentMessage(log);
+                        }, 100);
+                        
+                    }, 10 + (index * 150)); // Staggered animation
+                    
+                    // Update message counter
+                    totalMessageCount++;
+                    updateMessageCounter();
                 });
                 
                 displayedStepLogsCount = visibleLogs.length;
                 
-                // Auto-scroll to bottom of agent logs
-                agentLogsContainer.scrollTop = agentLogsContainer.scrollHeight;
+                // Smooth auto-scroll to bottom after all animations
+                setTimeout(() => {
+                    agentLogsContainer.scrollTo({
+                        top: agentLogsContainer.scrollHeight,
+                        behavior: 'smooth'
+                    });
+                }, 100 + (newLogs.length * 150));
             }
         }
         
@@ -1410,21 +2514,45 @@
                 
                 newLogs.forEach(log => {
                     const logDiv = document.createElement('div');
-                    logDiv.className = 'agent-log';
+                    
+                    // Add agent-specific CSS classes
+                    const agentClass = log.agent.toLowerCase().replace(/\s+/g, '-');
+                    logDiv.className = `agent-log ${agentClass}`;
+                    
                     logDiv.innerHTML = `
                         <div class="agent-header">
-                            <span class="agent-name">${log.agent}</span>
+                            <span class="agent-name ${agentClass}">${log.agent}</span>
                             <span class="agent-timestamp">${log.timestamp}</span>
                         </div>
                         <div class="agent-message">${log.message}</div>
                     `;
+                    
+                    // Add smooth entrance animation
+                    logDiv.style.opacity = '0';
+                    logDiv.style.transform = 'translateX(20px)';
                     agentLogsContainer.appendChild(logDiv);
+                    
+                    // Trigger animation
+                    setTimeout(() => {
+                        logDiv.style.transition = 'all 0.2s ease-out';
+                        logDiv.style.opacity = '1';
+                        logDiv.style.transform = 'translateX(0)';
+                    }, 10);
+                    
+                    // Update message counter
+                    totalMessageCount++;
+                    updateMessageCounter();
                 });
                 
                 displayedLogsCount = logs.length;
                 
-                // Auto-scroll to bottom of agent logs
-                agentLogsContainer.scrollTop = agentLogsContainer.scrollHeight;
+                // Smooth auto-scroll to bottom
+                setTimeout(() => {
+                    agentLogsContainer.scrollTo({
+                        top: agentLogsContainer.scrollHeight,
+                        behavior: 'smooth'
+                    });
+                }, 100);
             }
         }
         
@@ -1465,42 +2593,21 @@
             updateAgentActivity('✅ All operations completed successfully - Ready for new request');
         }
         
+        function updateMessageCounter() {
+            const counter = document.getElementById('messageCounter');
+            if (totalMessageCount === 0) {
+                counter.textContent = 'Ready for agent communications';
+            } else {
+                counter.textContent = `${totalMessageCount} messages • Live feed active`;
+            }
+        }
+        
         function clearPreviousResults() {
-            // Only clear workflow sections, keep the form as is
+            // Clear workflow sections
             document.getElementById('workflowSection').classList.add('hidden');
             document.getElementById('analysisResults').classList.add('hidden');
             document.getElementById('approvalSection').classList.add('hidden');
-            document.getElementById('progressSection').classList.add('hidden');
             document.getElementById('completionSection').classList.add('hidden');
-            
-            // Reset both log counters for step-based and AGV logs
-            displayedLogsCount = 0;
-            displayedStepLogsCount = 0;
-            const agentLogsContainer = document.getElementById('agentLogs');
-            if (agentLogsContainer) {
-                agentLogsContainer.innerHTML = `
-                    <div class="no-activity">
-                        <div class="no-activity-icon">💭</div>
-                        <p>No agent messages yet</p>
-                        <small>Submit a request to see AI agent communications</small>
-                    </div>
-                `;
-            }
-            
-            // Clear current activity
-            const activityDiv = document.getElementById('currentActivity');
-            if (activityDiv) {
-                activityDiv.style.display = 'none';
-                activityDiv.textContent = '';
-            }
-            
-            // Reset step progress
-            for (let i = 1; i <= 7; i++) {
-                const stepEl = document.getElementById('step' + i);
-                if (stepEl) {
-                    stepEl.className = 'step waiting';
-                }
-            }
             
             workflowStartTime = null;
         }
@@ -1516,6 +2623,438 @@
             submitBtn.textContent = '🚀 Start Workflow';
             submitBtn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
         }
+        
+        // Real Strands Observability Functions
+        async function fetchRealObservabilityData() {
+            /* Fetch real observability data from Strands framework */
+            try {
+                const response = await fetch('/api/agent_messages');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    console.log(`🔍 Real observability: ${data.real_observability_count} real messages, ${data.legacy_message_count} legacy messages`);
+                    return data.agent_logs;
+                }
+                return [];
+            } catch (error) {
+                console.error('Error fetching real observability data:', error);
+                return [];
+            }
+        }
+        
+        async function fetchToolCallDetails() {
+            /* Fetch detailed tool call information */
+            try {
+                const response = await fetch('/api/observability/tool_calls');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    console.log(`🛠️ Tool calls captured: ${data.total_calls}`);
+                    return data.tool_calls;
+                }
+                return [];
+            } catch (error) {
+                console.error('Error fetching tool calls:', error);
+                return [];
+            }
+        }
+        
+        async function fetchAgentCommunications() {
+            /* Fetch agent-to-agent communications */
+            try {
+                const response = await fetch('/api/observability/agent_communications');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    console.log(`🤖 Agent communications: ${data.total_communications}`);
+                    return data.communications;
+                }
+                return [];
+            } catch (error) {
+                console.error('Error fetching agent communications:', error);
+                return [];
+            }
+        }
+        
+        function displayRealObservabilityMessage(message) {
+            /* Display a real observability message with enhanced UI */
+            const agentLogsContainer = document.getElementById('agentLogs');
+            
+            const logDiv = document.createElement('div');
+            const agentClass = message.agent.toLowerCase().replace(/\s+/g, '-');
+            
+            // Add special styling for real observability messages
+            logDiv.className = `agent-log ${agentClass} real-observability`;
+            
+            // Enhanced display with observability metadata
+            let metadataDisplay = '';
+            if (message.metadata && Object.keys(message.metadata).length > 0) {
+                metadataDisplay = `
+                    <div class="observability-metadata">
+                        <small>Metadata: ${JSON.stringify(message.metadata, null, 1)}</small>
+                    </div>
+                `;
+            }
+            
+            logDiv.innerHTML = `
+                <div class="agent-header">
+                    <span class="agent-name ${agentClass}">
+                        🔍 ${message.agent}
+                        ${message.type === 'tool_call' ? '🛠️' : ''}
+                        ${message.type === 'progress' ? '📊' : ''}
+                        ${message.type === 'agent_communication' ? '🤖' : ''}
+                    </span>
+                    <span class="agent-timestamp">${message.timestamp}</span>
+                </div>
+                <div class="agent-message">${message.message}</div>
+                ${metadataDisplay}
+                ${message.progress !== undefined ? `<div class="progress-bar" style="width: ${message.progress * 100}%"></div>` : ''}
+            `;
+            
+            // Add special styling for real observability
+            logDiv.style.borderLeft = '4px solid #10b981';
+            logDiv.style.backgroundColor = 'rgba(16, 185, 129, 0.05)';
+            
+            // Animation
+            logDiv.style.opacity = '0';
+            logDiv.style.transform = 'translateX(20px)';
+            agentLogsContainer.appendChild(logDiv);
+            
+            setTimeout(() => {
+                logDiv.style.transition = 'all 0.3s ease-out';
+                logDiv.style.opacity = '1';
+                logDiv.style.transform = 'translateX(0)';
+            }, 10);
+            
+            // Auto-scroll
+            setTimeout(() => {
+                agentLogsContainer.scrollTo({
+                    top: agentLogsContainer.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }, 100);
+        }
+        
+        // Enhanced status monitoring with real observability
+        async function monitorWorkflowStatusWithObservability() {
+            /* Enhanced workflow monitoring with real observability data */
+            const status = await updateWorkflowDisplay();
+            
+            // Fetch real observability data during active workflow
+            if (status && status.active) {
+                const realMessages = await fetchRealObservabilityData();
+                const toolCalls = await fetchToolCallDetails();
+                const communications = await fetchAgentCommunications();
+                
+                console.log('📊 Real Observability Summary:', {
+                    messages: realMessages.length,
+                    toolCalls: toolCalls.length,
+                    communications: communications.length
+                });
+            }
+            
+            return status;
+        }
+        
+        // Load form options from configuration
+        async function loadFormOptions() {
+            console.log('Starting loadFormOptions...');
+            try {
+                console.log('Fetching from /api/form_data...');
+                const response = await fetch('/api/form_data');
+                console.log('Response received:', response.status, response.statusText);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                console.log('Parsed JSON result:', result);
+                
+                if (result.success && result.data) {
+                    const data = result.data;
+                    console.log('Success! Calling populateFormDropdowns...');
+                    populateFormDropdowns(data);
+                    console.log('Loaded form options from API:', {
+                        parts: data.parts.length,
+                        destinations: data.destinations.length,
+                        priorities: data.priorities.length
+                    });
+                    return true; // Success
+                } else {
+                    throw new Error(result.error || 'API returned success=false');
+                }
+            } catch (error) {
+                console.error('Error loading form options from API:', error);
+                console.log('API failed, keeping fallback options...');
+                return false; // Failed
+            }
+        }
+        
+        function populateFormDropdowns(data) {
+            console.log('populateFormDropdowns called with data:', data);
+            
+            // Populate parts dropdown
+            console.log('Populating parts dropdown...');
+            const partSelect = document.getElementById('partNumber');
+            if (!partSelect) {
+                console.error('partNumber element not found!');
+                return;
+            }
+            
+            partSelect.innerHTML = '';
+            if (data.parts && data.parts.length > 0) {
+                data.parts.forEach((part, index) => {
+                    console.log(`Adding part ${index + 1}:`, part);
+                    const option = document.createElement('option');
+                    option.value = part.value;
+                    option.textContent = part.label;
+                    partSelect.appendChild(option);
+                });
+                // Select first part by default
+                partSelect.value = data.parts[0].value;
+                console.log('Parts dropdown populated with', data.parts.length, 'parts');
+            } else {
+                console.warn('No parts data available');
+            }
+            
+            // Populate destinations dropdown
+            const destSelect = document.getElementById('destination');
+            destSelect.innerHTML = '';
+            data.destinations.forEach(dest => {
+                const option = document.createElement('option');
+                option.value = dest.value;
+                option.textContent = dest.label;
+                destSelect.appendChild(option);
+            });
+            // Select first destination by default
+            if (data.destinations.length > 0) {
+                destSelect.value = data.destinations[0].value;
+            }
+            
+            // Populate priorities dropdown
+            const prioritySelect = document.getElementById('priority');
+            prioritySelect.innerHTML = '';
+            data.priorities.forEach(priority => {
+                const option = document.createElement('option');
+                option.value = priority.value;
+                option.textContent = priority.label;
+                prioritySelect.appendChild(option);
+            });
+            // Select "MEDIUM" priority by default
+            prioritySelect.value = 'MEDIUM';
+            
+            console.log('All dropdowns populated successfully!');
+            console.log('Final dropdown states:', {
+                partOptions: partSelect.options.length,
+                destOptions: destSelect.options.length,
+                priorityOptions: prioritySelect.options.length
+            });
+        }
+        
+        function loadFallbackOptions() {
+            // Fallback data when API is not available
+            console.log('Loading fallback form options...');
+            
+            const fallbackData = {
+                parts: [
+                    { value: "HYDRAULIC-PUMP-HP450", label: "HYDRAULIC-PUMP-HP450 - Heavy-duty hydraulic pump for CNC machinery" },
+                    { value: "PART-ABC123", label: "PART-ABC123 - Standard production part" },
+                    { value: "PART-XYZ789", label: "PART-XYZ789 - Specialized part" },
+                    { value: "PART-DEF456", label: "PART-DEF456 - Common component" }
+                ],
+                destinations: [
+                    { value: "Production Line A", label: "Production Line A - Main assembly line" },
+                    { value: "Production Line B", label: "Production Line B - Secondary production" },
+                    { value: "Central Warehouse", label: "Central Warehouse - Primary storage facility" },
+                    { value: "Quality Control", label: "Quality Control - Inspection station" }
+                ],
+                priorities: [
+                    { value: "LOW", label: "Low Priority" },
+                    { value: "MEDIUM", label: "Medium Priority" },
+                    { value: "HIGH", label: "High Priority" },
+                    { value: "URGENT", label: "Urgent Priority" }
+                ]
+            };
+            
+            populateFormDropdowns(fallbackData);
+            console.log('Fallback form options loaded successfully');
+        }
+        
+        // Add a backup mechanism to ensure dropdowns are always populated
+        function ensureDropdownsPopulated() {
+            // Check if dropdowns are still showing "Loading..." after 3 seconds
+            setTimeout(() => {
+                const partSelect = document.getElementById('partNumber');
+                if (partSelect && partSelect.innerHTML.includes('Loading parts')) {
+                    console.warn('⚠️ Dropdowns still loading after 3 seconds, forcing fallback...');
+                    loadFallbackOptions();
+                }
+            }, 3000);
+        }
+
+        // Start real observability monitoring on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Real Strands Observability UI Ready');
+            console.log('DOM Content Loaded - Starting initialization...');
+            
+            // Load form options from configuration
+            console.log('About to call loadFormOptions...');
+            
+            // Load fallback options first to ensure dropdowns are always selectable
+            console.log('Loading fallback options immediately...');
+            loadFallbackOptions();
+            
+            // Add debugging to show dropdown states
+            setTimeout(() => {
+                const partSelect = document.getElementById('partNumber');
+                const destSelect = document.getElementById('destination');
+                const prioritySelect = document.getElementById('priority');
+                
+                console.log('DROPDOWN DEBUG:', {
+                    partOptions: partSelect ? partSelect.options.length : 'NOT FOUND',
+                    destOptions: destSelect ? destSelect.options.length : 'NOT FOUND',
+                    priorityOptions: prioritySelect ? prioritySelect.options.length : 'NOT FOUND',
+                    partHTML: partSelect ? partSelect.innerHTML.substring(0, 100) : 'NOT FOUND',
+                    destHTML: destSelect ? destSelect.innerHTML.substring(0, 100) : 'NOT FOUND',
+                    priorityHTML: prioritySelect ? prioritySelect.innerHTML.substring(0, 100) : 'NOT FOUND'
+                });
+            }, 1000);
+            
+            // Then try to load from API (will override fallback if successful)
+            setTimeout(() => {
+                console.log('📡 Attempting to load from API...');
+                loadFormOptions();
+            }, 500);
+            
+            // Set up backup mechanism in case everything fails
+            setTimeout(() => {
+                const partSelect = document.getElementById('partNumber');
+                if (partSelect && (partSelect.options.length <= 1 || partSelect.innerHTML.includes('Loading'))) {
+                    console.warn('⚠️ Dropdowns still not populated after 2 seconds, forcing fallback again...');
+                    loadFallbackOptions();
+                }
+            }, 2000);
+            // If URL contains ?debug_sse=1 enable debug mode to show all logs and extra diagnostics
+            try {
+                const params = new URLSearchParams(window.location.search);
+                if (params.get('debug_sse') === '1') {
+                    window._debug_show_all_logs = true;
+                    console.warn('🛠️ DEBUG MODE: debug_sse=1 — showing all step logs and extra SSE diagnostics');
+                }
+            } catch (e) {
+                // ignore
+            }
+            
+            // Test function for LLM display
+            window.testLLMDisplay = function() {
+                const llmArea = document.getElementById('llmResponse');
+                if (llmArea) {
+                    const testContent = `Test LLM Response Display
+
+To analyze the logistics request, we will break it down into several steps:
+
+1. Inventory check:
+{"name": "inventory_agent_tool", "parameters": {"query": "Check availability for part HYDRAULIC-PUMP-HP450, quantity 15"}}
+
+2. Fleet coordination:
+{"name": "fleet_agent_tool", "parameters": {"query": "Schedule delivery from Warehouse A to Production Line A"}}
+
+3. Approval request:
+{"name": "approval_agent_tool", "parameters": {"query": "Review and approve request for 15 units"}}
+
+This is a comprehensive analysis with detailed recommendations.`;
+                    
+                    llmArea.innerHTML = `<strong>🤖 AI Analysis & Recommendations:</strong><br><br>${testContent.replace(/\n/g, '<br>')}`;
+                    llmArea.style.border = '2px solid #10b981';
+                    console.log('✅ Test LLM display updated');
+                }
+            };
+            
+            // Add CSS for real observability messages
+            const style = document.createElement('style');
+            style.textContent = `
+                .real-observability {
+                    animation: realObservabilityPulse 0.5s ease-in-out;
+                }
+                
+                @keyframes realObservabilityPulse {
+                    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+                    50% { box-shadow: 0 0 10px 5px rgba(16, 185, 129, 0.1); }
+                    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+                }
+                
+                .observability-metadata {
+                    background: rgba(0, 0, 0, 0.05);
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                    margin-top: 4px;
+                    font-family: monospace;
+                    font-size: 0.8em;
+                }
+                
+                .progress-bar {
+                    height: 2px;
+                    background: linear-gradient(90deg, #10b981, #059669);
+                    margin-top: 4px;
+                    border-radius: 1px;
+                    transition: width 0.3s ease;
+                }
+            `;
+            document.head.appendChild(style);
+            
+            // Approval functions
+            window.showApprovalPanel = function(data) {
+                const panel = document.getElementById('approvalPanel');
+                const details = document.getElementById('approvalDetails');
+                
+                if (panel && details) {
+                    details.innerHTML = `<strong>Cost: ${data.content.match(/\$[\d,]+/)?.[0] || 'High'}</strong><br>${data.content}`;
+                    panel.style.display = 'block';
+                    console.log('🔔 Showing approval panel for:', data);
+                }
+            };
+            
+            window.handleApproval = function(decision) {
+                const reason = document.getElementById('approvalReason').value || '';
+                const panel = document.getElementById('approvalPanel');
+                
+                console.log(`📋 Handling approval: ${decision}, reason: ${reason}`);
+                
+                // Disable buttons to prevent double-click
+                document.getElementById('approveBtn').disabled = true;
+                document.getElementById('rejectBtn').disabled = true;
+                
+                // Send approval decision to backend
+                fetch('/api/approve', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        decision: decision,
+                        reason: reason
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('✅ Approval response:', data);
+                    if (data.success) {
+                        panel.style.display = 'none';
+                        updateStatus(`${decision === 'approve' ? '✅ Request approved' : '❌ Request rejected'}: ${reason}`, 
+                                   decision === 'approve' ? 'success' : 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Approval error:', error);
+                    updateStatus('Error processing approval decision', 'error');
+                    
+                    // Re-enable buttons on error
+                    document.getElementById('approveBtn').disabled = false;
+                    document.getElementById('rejectBtn').disabled = false;
+                });
+            };
+        });
     </script>
 </body>
 </html>

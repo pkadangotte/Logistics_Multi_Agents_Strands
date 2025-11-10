@@ -1,0 +1,102 @@
+{
+    "agv_fleet": {
+        "AGV-001": {
+            "type": "heavy_duty_agv",
+            "capacity_pieces": 100,
+            "current_location": "AGV_BASE",
+            "status": "AVAILABLE",
+            "battery_level": 85,
+            "cost_per_trip": 5.00,
+            "max_speed_mps": 1.5,
+            "charging_status": "not_charging"
+        },
+        "AGV-002": {
+            "type": "standard_agv",
+            "capacity_pieces": 50,
+            "current_location": "AGV_BASE",
+            "status": "AVAILABLE",
+            "battery_level": 92,
+            "cost_per_trip": 3.50,
+            "max_speed_mps": 1.2,
+            "charging_status": "not_charging"
+        },
+        "AGV-003": {
+            "type": "heavy_duty_agv",
+            "capacity_pieces": 100,
+            "current_location": "AGV_BASE",
+            "status": "AVAILABLE",
+            "battery_level": 87,
+            "cost_per_trip": 5.00,
+            "max_speed_mps": 1.5,
+            "charging_status": "not_charging"
+        },
+        "AGV-004": {
+            "type": "light_duty_agv",
+            "capacity_pieces": 25,
+            "current_location": "AGV_BASE",
+            "status": "AVAILABLE",
+            "battery_level": 82,
+            "cost_per_trip": 2.50,
+            "max_speed_mps": 1.0,
+            "charging_status": "not_charging"
+        }
+    },
+    "routes": {
+        "Warehouse A|Production Line A": {"distance_m": 150, "time_minutes": 4},
+        "Warehouse B|Production Line A": {"distance_m": 220, "time_minutes": 6},
+        "Warehouse A|Production Line B": {"distance_m": 180, "time_minutes": 5},
+        "Warehouse B|Production Line B": {"distance_m": 240, "time_minutes": 6.5},
+        "Central Warehouse|Production Line A": {"distance_m": 180, "time_minutes": 5},
+        "Central Warehouse|Production Line B": {"distance_m": 200, "time_minutes": 5.5},
+        "Central Warehouse|Quality Control": {"distance_m": 120, "time_minutes": 3},
+        "Warehouse A|Quality Control": {"distance_m": 80, "time_minutes": 2},
+        "Warehouse B|Quality Control": {"distance_m": 160, "time_minutes": 4},
+        "AGV_BASE|Warehouse A": {"distance_m": 100, "time_minutes": 3},
+        "AGV_BASE|Warehouse B": {"distance_m": 140, "time_minutes": 4},
+        "AGV_BASE|Central Warehouse": {"distance_m": 80, "time_minutes": 2.5},
+        "AGV_BASE|Production Line A": {"distance_m": 200, "time_minutes": 5.5},
+        "AGV_BASE|Production Line B": {"distance_m": 220, "time_minutes": 6}
+    },
+    "charging_stations": [
+        {
+            "station_id": "CHARGE-STATION-01",
+            "location": "AGV_BASE",
+            "capacity_agvs": 2,
+            "charging_rate_percent_per_hour": 25,
+            "status": "AVAILABLE"
+        },
+        {
+            "station_id": "CHARGE-STATION-02", 
+            "location": "Central Warehouse",
+            "capacity_agvs": 1,
+            "charging_rate_percent_per_hour": 20,
+            "status": "AVAILABLE"
+        }
+    ],
+    "delivery_destinations": [
+        {
+            "name": "Production Line A",
+            "location_id": "PROD_LINE_A",
+            "description": "Main assembly line",
+            "capacity_priority": "HIGH"
+        },
+        {
+            "name": "Production Line B",
+            "location_id": "PROD_LINE_B", 
+            "description": "Secondary production",
+            "capacity_priority": "MEDIUM"
+        },
+        {
+            "name": "Central Warehouse",
+            "location_id": "CENTRAL_WH",
+            "description": "Primary storage facility",
+            "capacity_priority": "LOW"
+        },
+        {
+            "name": "Quality Control",
+            "location_id": "QC_STATION",
+            "description": "Inspection station",
+            "capacity_priority": "MEDIUM"
+        }
+    ]
+}
