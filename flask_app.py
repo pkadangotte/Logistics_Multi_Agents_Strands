@@ -566,8 +566,8 @@ Coordinate inventory, fleet, and approval agents to provide a comprehensive resp
             'orchestrator_result': str(orchestrator_result) if orchestrator_result else "Analysis completed successfully"
         }
 
-    # Call the orchestrator agent with complete replenishment request
-    try:
+    except Exception as e:
+        logger.error(f"Error in orchestrator coordination: {e}")
         logger.info("🔍 ANALYSIS STEP 4: Starting orchestrator coordination")
         
         # Step 2: LogisticsOrchestrator - STRANDS COORDINATION WITH HOOKS
