@@ -15,10 +15,13 @@
   496 lines - Agents/InventoryAgent.py (was 860 - 42% reduction)
 
 📋 REMAINING:
-  814 lines - strands_flask_app.py (MEDIUM PRIORITY - Flask apps)
+  814 lines - strands_flask_app.py (✅ CURRENT - Primary Flask application)
   629 lines - orchestrator_hooks.py (MEDIUM PRIORITY - Observability)
-  392 lines - config/config_loader.py (LOW PRIORITY - Config management)
+  392 lines - config/config_loader.py (HIGH PRIORITY - Config management fixes needed)
   203 lines - Agents/LogisticsOrchestratorAgent.py (✅ ANALYZED - Appropriately sized)
+
+🗑️ TO REMOVE:
+  974 lines - flask_app.py (LEGACY - Can be removed, superseded by strands_flask_app.py)
 
 🆕 SERVICE LAYER:
   704 lines - src/logistics_system/core/approval_service.py
@@ -28,7 +31,7 @@
 
 ### Issues Identified & Status
 1. ✅ **RESOLVED - Monolithic Agent Classes**: Successfully extracted service layers with clean separation
-2. 🔍 **IDENTIFIED - Duplicate Flask Apps**: Both `flask_app.py` and `strands_flask_app.py` exist (Phase 2.2 target)
+2. 🔍 **IDENTIFIED - Legacy Flask App**: `flask_app.py` is legacy and can be removed (`strands_flask_app.py` is current)
 3. 🔍 **IDENTIFIED - Configuration Issues**: Config parsing errors observed, needs consolidation (Phase 2.1 priority)
 4. ✅ **RESOLVED - Separation of Layers**: Clean service layer architecture established
 5. ✅ **RESOLVED - Testability**: Services can now be tested independently from Strands framework
@@ -53,10 +56,11 @@
 - [x] Test: All agents work perfectly with extracted services
 
 #### 1.3: Web Layer & System Integration ✅ COMPLETED
-- [x] Verified Flask app compatibility with refactored agents
-- [x] Validated system-wide integration with service layer
+- [x] Verified strands_flask_app.py compatibility with refactored agents
+- [x] Validated system-wide integration with service layer  
 - [x] Confirmed zero breaking changes maintained
 - [x] Test: Web interface works identically
+- [x] Identified flask_app.py as legacy (can be removed in Phase 2)
 
 ### Phase 2: Component Isolation & Quality Improvements (LOW Risk)
 **Goal**: Configuration management, testing, and code quality improvements  
@@ -95,14 +99,23 @@
 3. Add configuration validation and schema enforcement
 4. Implement environment-specific configuration support
 
-#### 2.2 Flask Application Consolidation (MEDIUM PRIORITY) 
-**Target Files**: `flask_app.py`, `strands_flask_app.py`
-**Issues**: Duplicate Flask applications with different features
+#### 2.2 Legacy Code Cleanup (LOW PRIORITY)
+**Target Files**: `flask_app.py` (legacy), unused imports, deprecated functions  
+**Clarification**: `strands_flask_app.py` is the current Flask application
 **Goals**:
-1. Analyze differences between the two Flask apps
-2. Merge functionality into single, comprehensive web application
-3. Maintain backward compatibility with existing endpoints
-4. Improve web interface consistency
+1. Remove legacy `flask_app.py` (superseded by `strands_flask_app.py`)
+2. Clean up unused imports and deprecated code
+3. Verify no dependencies on removed legacy code
+4. Update any documentation references to old Flask app
+
+#### 2.2 Legacy Code Cleanup (LOW PRIORITY)
+**Target Files**: `flask_app.py` (legacy), unused imports, deprecated functions
+**Issues**: Legacy Flask application no longer needed
+**Goals**:
+1. Remove legacy `flask_app.py` (superseded by `strands_flask_app.py`)
+2. Clean up unused imports and deprecated code
+3. Verify no dependencies on removed legacy code
+4. Update any documentation references to old Flask app
 
 #### 2.3 Code Quality & Standards (ONGOING)
 **Target**: All refactored services and agents
@@ -270,10 +283,14 @@ If any phase causes issues:
 ## 🔗 Dependencies & Constraints
 
 ### Must Maintain:
-- **Flask App Compatibility**: `strands_flask_app.py` entry point ✅ VALIDATED
+- **Flask App Compatibility**: `strands_flask_app.py` entry point ✅ VALIDATED (primary app)
 - **Agent Interface**: All existing agent tools and methods ✅ PRESERVED
 - **Configuration**: Current JSON config file format ⚠️ NEEDS IMPROVEMENT
 - **Environment**: Python 3.12, Strands framework version ✅ COMPATIBLE
+
+### Can Remove:
+- **Legacy Flask App**: `flask_app.py` (superseded by `strands_flask_app.py`)
+- **Deprecated Functions**: Any unused legacy code identified during cleanup
 
 ### Can Change:
 - Internal implementation details ✅ IMPROVED
