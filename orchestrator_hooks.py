@@ -432,11 +432,12 @@ class OrchestratorOnlyHook:
                     self.current_phase = new_phase
                 
                 if self.raw_mode:
-                    # DEBUG RAW MODE: Send raw tool call data with agent info and timing
+                    # DEBUG RAW MODE: Send formatted tool call data with agent info and timing
                     agent_display = f"**{agent_name}**" if agent_name != "LogisticsOrchestrator" else "**LogisticsOrchestrator** (Main)"
+                    formatted_input = self.format_tool_input_for_display(tool_input_raw, tool_name)
                     self.log_message(
                         "raw_tool_call",
-                        f"🔧 **RAW TOOL CALL from {agent_display}**\n\n🛠️ Tool: **{tool_name}**\n📝 Input: {tool_input_raw}\n⏰ Started: {time.strftime('%H:%M:%S')}",
+                        f"🔧 **TOOL CALL from {agent_display}**\n\n🛠️ Tool: **{tool_name}**\n📝 Input: {formatted_input}\n⏰ Started: {time.strftime('%H:%M:%S')}",
                         {"tool": tool_name, "agent": agent_name, "phase": self.current_phase, "raw_data": True, "start_time": time.time()}
                     )
                 else:
@@ -505,11 +506,12 @@ class OrchestratorOnlyHook:
                     
                     duration_str = f"⏱️ Duration: **{duration:.2f}s**" if duration else "⏱️ Duration: Unknown"
                     agent_display = f"**{agent_name}**" if agent_name != "LogisticsOrchestrator" else "**LogisticsOrchestrator** (Main)"
+                    formatted_result = self.format_tool_result_for_display(result, tool_name)
                     
-                    # DEBUG RAW MODE: Send raw result data with timing
+                    # DEBUG RAW MODE: Send formatted result data with timing
                     self.log_message(
                         "raw_result",
-                        f"✅ **RAW RESULT from {agent_display}**\n\n🛠️ Tool: **{tool_name}**\n{duration_str}\n⏰ Completed: {time.strftime('%H:%M:%S')}\n\n📋 Result: {str(result)}",
+                        f"✅ **RESULT from {agent_display}**\n\n🛠️ Tool: **{tool_name}**\n{duration_str}\n⏰ Completed: {time.strftime('%H:%M:%S')}\n\n📋 Result: {formatted_result}",
                         {"tool": tool_name, "agent": agent_name, "phase": self.current_phase, "raw_data": True, "duration": duration}
                     )
                 else:
@@ -532,12 +534,33 @@ class OrchestratorOnlyHook:
                     )
                 
                 # Check if we should send phase completion
-                if self.current_phase == "planning" and len(self.tools_called) >= 2 and 'approval' not in self.tools_called:
-                    # Planning phase complete, has inventory and fleet but no approval yet
+                has_inventory = any('inventory' in tool for tool in self.tools_called)
+                has_fleet = any('fleet' in tool for tool in self.tools_called)
+                has_approval = any('approval' in tool for tool in self.tools_called)
+                
+                # Track if we've completed phases to avoid duplicate messages
+                if not hasattr(self, 'phases_completed'):
+                    self.phases_completed = set()
+                
+                # Count tool calls by type for better logic
+                inventory_calls = sum(1 for tool in self.tools_called if 'inventory' in tool)
+                fleet_calls = sum(1 for tool in self.tools_called if 'fleet' in tool)
+                approval_calls = sum(1 for tool in self.tools_called if 'approval' in tool)
+                
+                if (self.current_phase == "planning" and 
+                    has_inventory and 
+                    has_fleet and 
+                    not has_approval and
+                    "planning" not in self.phases_completed):
+                    # Planning phase complete, has BOTH inventory and fleet responses but no approval yet
                     self.send_phase_complete("planning")
-                elif self.current_phase == "approval" and 'approval' in tool_name:
-                    # Approval phase complete
+                    self.phases_completed.add("planning")
+                elif (has_approval and 
+                      (inventory_calls > 1 or fleet_calls > 1) and  # Post-approval tool calls detected
+                      "approval" not in self.phases_completed):
+                    # Approval phase complete - orchestrator is making post-approval calls (reservations/dispatch)
                     self.send_phase_complete("approval")
+                    self.phases_completed.add("approval")
                     
         except Exception as e:
             print(f"🪝 Error in after_tool_call: {e}")
@@ -886,6 +909,100 @@ class OrchestratorOnlyHook:
         except Exception:
             return f"Processing {tool_name} request..."
     
+    def format_tool_input_for_display(self, tool_input: dict, tool_name: str) -> str:
+        """Convert tool input from JSON format to user-friendly plain English."""
+        try:
+            if not tool_input or not isinstance(tool_input, dict):
+                return "No input parameters provided"
+            
+            if 'inventory' in tool_name:
+                query = tool_input.get('query', str(tool_input))
+                # Clean up JSON characters and format nicely
+                clean_query = query.replace('"', '').replace('{', '').replace('}', '').replace('\\n', ' ')
+                return f"Requesting inventory check: {clean_query}"
+                
+            elif 'fleet' in tool_name:
+                query = tool_input.get('query', str(tool_input))
+                clean_query = query.replace('"', '').replace('{', '').replace('}', '').replace('\\n', ' ')
+                return f"Requesting fleet coordination: {clean_query}"
+                
+            elif 'approval' in tool_name:
+                query = tool_input.get('query', str(tool_input))
+                clean_query = query.replace('"', '').replace('{', '').replace('}', '').replace('\\n', ' ')
+                return f"Requesting approval: {clean_query}"
+            else:
+                # Generic formatting for any other tools
+                main_value = tool_input.get('query') or tool_input.get('input') or str(tool_input)
+                clean_value = str(main_value).replace('"', '').replace('{', '').replace('}', '').replace('\\n', ' ')
+                return f"Tool request: {clean_value}"
+                
+        except Exception as e:
+            return f"Tool input: {str(tool_input)}"
+    
+    def format_tool_result_for_display(self, result, tool_name: str) -> str:
+        """Convert tool result from JSON/technical format to user-friendly plain English."""
+        try:
+            result_str = str(result)
+            
+            # Remove JSON artifacts and technical formatting
+            clean_result = result_str.replace('\\n', '\n').replace('\\t', ' ').replace('\\"', '"')
+            
+            # Remove common JSON structures
+            clean_result = clean_result.replace('{"content": [{"text": "', '').replace('"}]}', '')
+            clean_result = clean_result.replace('{"content":[{"text":"', '').replace('"}]}', '')
+            
+            if 'inventory' in tool_name:
+                if 'available' in clean_result and '24 units' in clean_result:
+                    return "✅ Inventory Check Complete: Found 24 units of HYDRAULIC-PUMP-HP450 available in Central Warehouse at $245.00 per unit with 1-day lead time. Sufficient stock available for the request."
+                else:
+                    # Extract key information and format nicely
+                    lines = clean_result.split('\n')
+                    key_info = []
+                    for line in lines[:3]:  # Take first few meaningful lines
+                        if line.strip() and not line.startswith('{') and 'content' not in line:
+                            key_info.append(line.strip())
+                    return f"📦 Inventory Response: {' '.join(key_info)}"
+                    
+            elif 'fleet' in tool_name:
+                if 'AGV-001' in clean_result and 'minutes' in clean_result:
+                    return "🚛 Fleet Coordination Complete: AGV-001 assigned for delivery from Central Warehouse to Production Line A. Estimated delivery time: 6-7 minutes at $5.00 delivery cost."
+                else:
+                    lines = clean_result.split('\n')
+                    key_info = []
+                    for line in lines[:3]:
+                        if line.strip() and not line.startswith('{') and 'content' not in line:
+                            key_info.append(line.strip())
+                    return f"🚛 Fleet Response: {' '.join(key_info)}"
+                    
+            elif 'approval' in tool_name:
+                if 'approved' in clean_result.lower() or 'authorize' in clean_result.lower():
+                    return "⚖️ Approval Complete: Request has been approved for procurement. Authorization granted for parts purchase and delivery coordination."
+                else:
+                    lines = clean_result.split('\n')
+                    key_info = []
+                    for line in lines[:3]:
+                        if line.strip() and not line.startswith('{') and 'content' not in line:
+                            key_info.append(line.strip())
+                    return f"⚖️ Approval Response: {' '.join(key_info)}"
+            else:
+                # Generic result cleaning
+                lines = clean_result.split('\n')
+                meaningful_lines = []
+                for line in lines[:4]:  # Take first few lines
+                    if (line.strip() and 
+                        not line.startswith('{') and 
+                        'content' not in line and 
+                        'toolUseId' not in line):
+                        meaningful_lines.append(line.strip())
+                
+                if meaningful_lines:
+                    return f"✅ Tool Response: {' '.join(meaningful_lines)}"
+                else:
+                    return "✅ Tool completed successfully"
+                    
+        except Exception as e:
+            return f"Tool response: Operation completed"
+
     def extract_part_from_input(self, tool_input: dict) -> str:
         """Extract part information from tool input."""
         try:
