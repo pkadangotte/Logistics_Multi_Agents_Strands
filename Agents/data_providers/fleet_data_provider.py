@@ -55,9 +55,49 @@ class FleetDataProvider:
         except Exception as e:
             return {"error": f"Error retrieving AGV info: {str(e)}"}
     
-    def get_available_agvs(self, min_capacity: int = 0, agv_type: str = None) -> Union[List[Dict], Dict]:
+    def get_available_agvs(self, min_battery: int = 20, location: str = None) -> Union[List[Dict], Dict]:
         """
-        Get list of available AGVs, optionally filtered by capacity and type.
+        Get list of available AGVs, optionally filtered by battery level and location.
+        
+        Args:
+            min_battery: Minimum battery level required (default 20%)
+            location: Optional location filter
+            
+        Returns:
+            List of available AGVs matching criteria
+        """
+        try:
+            available_agvs = self.agv_df[self.agv_df['status'] == 'AVAILABLE']
+            
+            # Filter by battery level
+            if min_battery > 0:
+                available_agvs = available_agvs[available_agvs['battery_level'] >= min_battery]
+            
+            # Filter by location if specified
+            if location:
+                available_agvs = available_agvs[available_agvs['current_location'] == location]
+            
+            result = [
+                {
+                    "agv_id": idx,
+                    "type": row['type'],
+                    "capacity_pieces": row['capacity_pieces'],
+                    "current_location": row['current_location'],
+                    "battery_level": row['battery_level'],
+                    "cost_per_trip": row['cost_per_trip'],
+                    "max_speed_mps": row['max_speed_mps']
+                }
+                for idx, row in available_agvs.iterrows()
+            ]
+            return self._convert_to_json_serializable(result)
+            
+        except Exception as e:
+            return {"error": f"Error getting available AGVs: {str(e)}"}
+    
+    def _get_available_agvs_by_capacity(self, min_capacity: int = 0, agv_type: str = None) -> Union[List[Dict], Dict]:
+        """
+        Helper method to get available AGVs filtered by capacity and type.
+        Used internally by find_optimal_agv method.
         
         Args:
             min_capacity: Minimum capacity required
@@ -90,7 +130,7 @@ class FleetDataProvider:
             return self._convert_to_json_serializable(result)
             
         except Exception as e:
-            return {"error": f"Error getting available AGVs: {str(e)}"}
+            return {"error": f"Error getting available AGVs by capacity: {str(e)}"}
     
     def find_optimal_agv(self, quantity: int, from_location: str, to_location: str) -> dict:
         """
@@ -113,7 +153,7 @@ class FleetDataProvider:
             route_info = self.routes_df.loc[route_key]
             
             # Get available AGVs with sufficient capacity
-            suitable_agvs = self.get_available_agvs(min_capacity=quantity)
+            suitable_agvs = self._get_available_agvs_by_capacity(min_capacity=quantity)
             
             if not suitable_agvs or "error" in suitable_agvs:
                 return {"error": "No suitable AGVs available for this task"}
@@ -188,6 +228,19 @@ class FleetDataProvider:
                     "error": f"Task quantity ({task_details['quantity']}) exceeds AGV capacity ({agv_info['capacity_pieces']})"
                 }
             
+            # Get route information for time estimation
+            route_key = f"{task_details['from_location']}|{task_details['to_location']}"
+            route_info = self.get_route_info(task_details['from_location'], task_details['to_location'])
+            
+            # Calculate estimated time
+            if "error" not in route_info:
+                estimated_minutes = route_info.get('time_minutes', 10)
+                distance_m = route_info.get('distance_m', 0)
+            else:
+                # Fallback if route not found
+                estimated_minutes = 10
+                distance_m = 0
+            
             # Update AGV status
             self.agv_df.loc[agv_id, 'status'] = 'DISPATCHED'
             self.agv_df.loc[agv_id, 'current_location'] = task_details['from_location']
@@ -200,7 +253,9 @@ class FleetDataProvider:
                 "task_details": task_details,
                 "requester": requester,
                 "status": "DISPATCHED",
-                "estimated_completion": (datetime.now() + timedelta(minutes=10)).isoformat()  # Placeholder
+                "estimated_completion": (datetime.now() + timedelta(minutes=estimated_minutes)).isoformat(),
+                "estimated_time_minutes": estimated_minutes,
+                "distance_m": distance_m
             }
             
             self.dispatch_log.append(dispatch_record)
@@ -212,6 +267,9 @@ class FleetDataProvider:
                 "agv_id": agv_id,
                 "estimated_cost": agv_info['cost_per_trip'],
                 "estimated_completion": dispatch_record["estimated_completion"],
+                "estimated_time_minutes": estimated_minutes,
+                "distance_m": distance_m,
+                "route": f"{task_details['from_location']} → {task_details['to_location']}",
                 "task_details": task_details
             }
             

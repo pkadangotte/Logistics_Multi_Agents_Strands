@@ -78,9 +78,11 @@ class InventoryDataProvider:
             "net_available": net_available,
             "can_fulfill": quantity <= net_available,
             "shortage": max(0, quantity - net_available),
+            "warehouse_location": part_info['warehouse_location'],
             "lead_time_days": part_info['lead_time_days'],
             "cost_per_unit": part_info['cost_per_unit'],
-            "total_cost": quantity * part_info['cost_per_unit']
+            "total_cost": quantity * part_info['cost_per_unit'],
+            "_usage_hint": f"For next tool: use from_location='{part_info['warehouse_location']}'"
         }
         return self._convert_to_json_serializable(result)
     

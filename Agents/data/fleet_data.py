@@ -56,7 +56,12 @@ routes_data = {
     "Warehouse A|Production Line B": {"distance_m": 180, "time_minutes": 5},
     "Warehouse B|Production Line B": {"distance_m": 240, "time_minutes": 6.5},
     "Central Warehouse|Production Line A": {"distance_m": 180, "time_minutes": 5},
-    "Central Warehouse|Production Line B": {"distance_m": 200, "time_minutes": 5.5}
+    "Central Warehouse|Production Line B": {"distance_m": 200, "time_minutes": 5.5},
+    "Warehouse A|Manufacturing Plant Delta": {"distance_m": 350, "time_minutes": 9},
+    "Warehouse B|Manufacturing Plant Delta": {"distance_m": 420, "time_minutes": 11},
+    "Central Warehouse|Manufacturing Plant Delta": {"distance_m": 380, "time_minutes": 10},
+    "Inventory Warehouse|Manufacturing Plant Delta": {"distance_m": 320, "time_minutes": 8.5},
+    "AGV_BASE|Manufacturing Plant Delta": {"distance_m": 300, "time_minutes": 8}
 }
 
 

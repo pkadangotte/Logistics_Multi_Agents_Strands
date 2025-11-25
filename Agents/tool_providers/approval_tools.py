@@ -15,6 +15,11 @@ class ApprovalAgentToolProvider:
     
     @tool(name="check_approval_threshold")
     def check_approval_threshold(self, cost: float) -> str:
+        """
+        Check if cost requires approval. Returns requires_approval (true/false).
+        If false, skip create_approval_request and proceed to find_optimal_agv.
+        If true, call create_approval_request next.
+        """
         try:
             cost = float(cost)
             result = self.approval_manager.get_approval_threshold(cost)
@@ -28,6 +33,10 @@ class ApprovalAgentToolProvider:
     
     @tool(name="create_approval_request")
     def create_approval_request(self, cost: float, description: str, request_type: str, requester: str = "ApprovalAgent") -> str:
+        """
+        Create approval request. ONLY call if check_approval_threshold said requires_approval=true.
+        Call ONCE. If status='auto_approved', proceed. If 'pending', stop and report.
+        """
         try:
             cost = float(cost)
             request_details = {
@@ -46,16 +55,25 @@ class ApprovalAgentToolProvider:
     
     @tool(name="process_approval")
     def process_approval(self, request_id: str, decision: str, approver: str, comments: str = "") -> str:
+        """
+        Manual approval processing. NOT needed in normal workflows.
+        """
         result = self.approval_manager.process_approval(request_id, decision, approver, comments)
         return json.dumps(result, indent=2)
     
     @tool(name="get_pending_approvals")
     def get_pending_approvals(self, approver_type: str = None) -> str:
+        """
+        List pending approvals. For reporting only, not needed in workflows.
+        """
         result = self.approval_manager.get_pending_approvals(approver_type)
         return json.dumps(result, indent=2)
     
     @tool(name="check_compliance")
     def check_compliance(self, cost: float, description: str, request_type: str) -> str:
+        """
+        Compliance check. Redundant - check_approval_threshold handles this.
+        """
         try:
             cost = float(cost)
             request_details = {
@@ -74,6 +92,9 @@ class ApprovalAgentToolProvider:
     
     @tool(name="get_approval_statistics")
     def get_approval_statistics(self) -> str:
+        """
+        Approval statistics. NEVER needed in delivery workflows.
+        """
         result = self.approval_manager.get_approval_statistics()
         return json.dumps(result, indent=2)
 
