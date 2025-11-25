@@ -3,8 +3,13 @@ Enhanced Logistics Agent Testing Module
 Provides options to run different test scenarios with agent discovery functionality.
 """
 
+import sys
+import os
 import json
 from typing import Dict, List, Optional
+
+# Add the parent directory to the Python path for imports
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Agents'))
 
 
 def display_test_menu():
@@ -99,7 +104,7 @@ def create_test_agents(factory):
     for agent_type, agent in agents.items():
         if agent:
             info = agent.get_info()
-            print(f"   {agent_type.title()}: {info['data_manager_tools']} domain + 3 A2A = {info['total_tools']} total tools")
+            print(f"   {agent_type.title()}: {info['data_manager_tools']} domain tools, {info['total_tools']} total tools")
 
     return agents
 
@@ -456,5 +461,16 @@ def main_enhanced_testing(factory):
 if __name__ == "__main__":
     print("This module should be imported and used with an AgentFactory instance.")
     print("Example usage:")
-    print("from enhanced_test_agents import main_enhanced_testing")
-    print("main_enhanced_testing(your_factory)")
+    print()
+    print("# From the root directory:")
+    print("python -c \"")
+    print("import sys; sys.path.append('Agents')")
+    print("from agent_factory import initialize_agent_factory")
+    print("from data_setup import setup_all_data_managers")
+    print("from tests.test_agents import main_enhanced_testing")
+    print()
+    print("# Setup and run tests")
+    print("inv_mgr, fleet_mgr, approval_mgr = setup_all_data_managers()")
+    print("factory = initialize_agent_factory(inv_mgr, fleet_mgr, approval_mgr)")
+    print("main_enhanced_testing(factory)")
+    print("\"")

@@ -14,7 +14,6 @@ This system demonstrates advanced multi-agent coordination in logistics operatio
 │   ├── agent_factory.py       # AgentFactory for creating specialized agents
 │   ├── data_setup.py          # Initial data setup and DataFrames
 │   ├── main.py               # Main execution script
-│   ├── test_agents.py        # Comprehensive test suite
 │   ├── requirements.py       # Dependencies and imports
 │   ├── data/                 # Data management modules
 │   │   ├── inventory_data.py
@@ -33,6 +32,10 @@ This system demonstrates advanced multi-agent coordination in logistics operatio
 │   ├── configuration_reference.md
 │   ├── configuration_examples.md
 │   └── configuration_implementation.md
+├── tests/                   # Test suite
+│   ├── __init__.py
+│   ├── test_agents.py      # Comprehensive test suite
+│   └── run_tests.py        # Test runner script
 └── README.md               # This file
 ```
 
@@ -159,8 +162,23 @@ The system provides transparent tool execution tracking showing which agent exec
 
 Run comprehensive tests:
 ```bash
-cd Agents
-python test_agents.py
+# Option 1: Using the test runner
+python tests/run_tests.py
+
+# Option 2: Direct execution  
+cd tests && python test_agents.py
+
+# Option 3: From Python
+python -c "
+import sys; sys.path.append('Agents')
+from agent_factory import initialize_agent_factory
+from data_setup import setup_all_data_managers  
+from tests.test_agents import main_enhanced_testing
+
+inv_mgr, fleet_mgr, approval_mgr = setup_all_data_managers()
+factory = initialize_agent_factory(inv_mgr, fleet_mgr, approval_mgr)
+main_enhanced_testing(factory)
+"
 ```
 
 ## 🎯 Key Features
