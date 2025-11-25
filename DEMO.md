@@ -53,32 +53,40 @@ The demo includes 16 carefully crafted example queries organized into 5 categori
 1. **Stock Overview** - Check current stock levels for all warehouse items
 2. **Low Stock Alerts** - Find items needing replenishment  
 3. **Hydraulic Pump Lookup** - Get detailed info for HYDRAULIC-PUMP-HP450 (24 units, $245 each)
-3a. **Multi-Part Check** - Check PART-ABC123 and PART-DEF456 status
+4. **Multi-Part Check** - Check PART-ABC123 and PART-DEF456 status
 
 #### 🚛 **Fleet Management** 
-4. **Fleet Status** - Show AGV status and current assignments
-5. **Hydraulic Equipment Route** - Route from Central Warehouse to Manufacturing Plant Delta
-6. **Urgent Production Delivery** - Assign AGV for 50 units of PART-ABC123
+5. **Fleet Status** - Show AGV status and current assignments
+6. **Hydraulic Equipment Route** - Route from Central Warehouse to Manufacturing Plant Delta
+7. **Urgent Production Delivery** - Assign AGV for 50 units of PART-ABC123
 
 #### ✅ **Approval Workflows**
-7. **Approval Queue** - Show pending approval requests
-8. **High-Value Hydraulic Approval** - Process $4,900 HYDRAULIC-PUMP-HP450 shipment
-9. **High-Value Audit Trail** - Check approval history for orders >$1,000
+8. **Approval Queue** - Show pending approval requests
+9. **High-Value Hydraulic Approval** - Process $4,900 HYDRAULIC-PUMP-HP450 shipment
+10. **High-Value Audit Trail** - Check approval history for orders >$1,000
 
 #### 🎯 **Complex Orchestration**
-10. **Hydraulic Pump Delivery** - 15 units of HYDRAULIC-PUMP-HP450 ($3,675) end-to-end workflow
-11. **Emergency Production Parts** - Urgent 50-unit PART-ABC123 delivery from Warehouse A  
-12. **Inter-Warehouse Transfer** - 25 units of PART-DEF456 transfer ($206.25)
+11. **Hydraulic Pump Delivery** - 15 units of HYDRAULIC-PUMP-HP450 ($3,675) end-to-end workflow
+12. **Emergency Production Parts** - Urgent 50-unit PART-ABC123 delivery from Warehouse A  
+13. **Inter-Warehouse Transfer** - 30 units of PART-XYZ789 to Production Line B
 
 #### 🔄 **Cross-Agent Communication**
-13. **Large PART-XYZ789 Order** - 30 units requested (42 available) with vehicle coordination
-14. **High-Value Multi-Agent** - $4,900 HYDRAULIC-PUMP-HP450 approval + fleet workflow
-15. **Complete System Analysis** - Full inventory status + fleet + approvals optimization
+14. **Large Order Coordination** - 25 units of PART-DEF456 to Manufacturing Plant Delta
+15. **High-Value Multi-Agent** - 20 units HYDRAULIC-PUMP-HP450 ($4,900) approval + fleet workflow
+16. **Complete System Analysis** - Full inventory status + fleet + approvals optimization
 
-### 💬 **Custom Query Mode**
-- Enter your own natural language queries
-- Choose which agent type to handle your request
-- Explore system capabilities beyond predefined examples
+### 🎨 **Rich Terminal UI Features**
+- 💭 **Animated Spinner** - Beautiful "Thinking..." animation with braille characters during processing
+- 📊 **Formatted Tables** - Color-coded agent status, inventory, fleet, and approval data
+- 🎯 **Structured Responses** - 3-phase format (Planning → Execution → Summary) in elegant panels
+- 📝 **Query Display** - See exactly what's being processed before agent responds
+
+### 🔧 **Interactive Controls**
+- **1-16**: Run predefined example queries
+- **100**: Custom query mode - enter your own queries with agent selection
+- **200**: Toggle streaming mode on/off
+- **300**: Switch between models (qwen2.5:3b ↔ qwen2.5:7b)
+- **400**: Quit demo
 
 ### 🤖 **Agent Types Available**
 - **📦 Inventory Agent** - Specialized in inventory management
@@ -100,12 +108,18 @@ The demo will automatically:
 - Display system status and available options
 
 ### 3. **Choose Your Experience**
-- **Select 1-15**: Run predefined example queries
-- **Select C**: Enter custom queries with agent selection
-- **Select Q**: Exit the demo
+- **Select 1-16**: Run predefined example queries
+- **Select 100**: Enter custom queries with agent selection
+- **Select 200**: Toggle streaming mode (animated spinner)
+- **Select 300**: Switch AI model (fast 3b ↔ powerful 7b)
+- **Select 400**: Exit the demo
 
 ### 4. **Interact with Responses**
-- Review detailed agent responses
+- Watch animated "💭 Thinking..." spinner during processing
+- Review detailed 3-phase agent responses:
+  - ✿ Planning Phase: Task analysis and required actions
+  - ✿ Execution Phase: Each tool result with real data
+  - ✿ Summary: Complete details with metrics (time, distance, cost, IDs)
 - Press Enter to continue to the next interaction
 - Use Ctrl+C to interrupt and return to menu
 
@@ -141,24 +155,74 @@ Experience the power of AI-driven logistics orchestration!
 
 📋 EXAMPLE QUERIES
 🏭 Inventory Management
-  1. 📦 Basic inventory overview
-  2. 📦 Low stock alert system
-  3. 📦 Specific item lookup
+  1. 📦 Stock overview
+  2. 📦 Low stock alerts
+  3. 📦 Hydraulic pump lookup
+  4. 📦 Multi-part check
 
 🚛 Fleet Management  
-  4. 🚛 Fleet status overview
-  5. 🚛 Route optimization
-  6. 🚛 Vehicle assignment
+  5. 🚛 Fleet status
+  6. 🚛 Route optimization
+  7. 🚛 Urgent delivery
 
-🎯 Select option: 10
+✅ Approval Workflows
+  8. ✅ Approval queue
+  9. ✅ High-value approval
+  10. ✅ Audit trail
 
-🤖 Executing with ORCHESTRATOR agent...
-📝 Query: I need to deliver 100 units of SKU001 to customer location XYZ...
+🎯 Complex Orchestration
+  11. 🎯 Hydraulic pump delivery
+  12. 🎯 Emergency parts
+  13. 🎯 Warehouse transfer
 
-🎯 AGENT RESPONSE
-============================================================
-[Agent provides comprehensive delivery coordination response]
-============================================================
+🔄 Cross-Agent Communication
+  14. 🔄 Large order coordination
+  15. 🔄 High-value multi-agent
+  16. 🔄 System optimization
+
+  100. 💬 Custom query
+  200. ⚡ Toggle streaming (ON)
+  300. 🎮 Switch model (qwen2.5:3b)
+  400. 🚪 Quit
+
+🎯 Select option: 12
+
+📝 Query: URGENT: Need to deliver 50 units of PART-ABC123...
+
+💭 Thinking... ⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏
+
+╭─ 🎯 Agent Response ─────────────────────────────────╮
+│                                                     │
+│ ═══════════════════════════════════════════════════ │
+│ ✿ PLANNING PHASE:                                  │
+│ ═══════════════════════════════════════════════════ │
+│ 📋 Task: Urgent 50-unit delivery of PART-ABC123    │
+│ 🎯 Actions: 5 tools (availability, reserve,        │
+│            approval check, find AGV, dispatch)      │
+│                                                     │
+│ ═══════════════════════════════════════════════════ │
+│ ✿ EXECUTION PHASE:                                 │
+│ ═══════════════════════════════════════════════════ │
+│ ✓ check_availability → 85 units at Warehouse A     │
+│ ✓ reserve_parts → Reserved 50 units, ID: 7         │
+│ ✓ check_approval_threshold → Auto-approved ($625)  │
+│ ✓ find_optimal_agv → AGV-002 selected              │
+│ ✓ dispatch_agv → Success, time: 4 min, 150m        │
+│                                                     │
+│ ═══════════════════════════════════════════════════ │
+│ ✿ SUMMARY:                                         │
+│ ═══════════════════════════════════════════════════ │
+│ ✅ Results: Dispatched AGV-002 successfully        │
+│ 📊 Details:                                         │
+│    - Dispatch ID: 1                                 │
+│    - Delivery Time: 4 minutes                       │
+│    - Distance: 150 meters                           │
+│    - Cost: $3.50                                    │
+│    - Reservation ID: 7                              │
+│ 💡 Next: Monitor delivery progress                 │
+╰─────────────────────────────────────────────────────╯
+
+Press Enter to continue...
 ```
 
 ## 🔧 Prerequisites
@@ -174,9 +238,10 @@ pip install -r requirements.txt
    ```bash
    ollama serve
    ```
-3. **Pull required model**:
+3. **Pull required models**:
    ```bash
-   ollama pull qwen2.5:7b
+   ollama pull qwen2.5:3b  # Fast model (default)
+   ollama pull qwen2.5:7b  # Powerful model (optional)
    ```
 
 ### Directory Structure
@@ -200,9 +265,11 @@ Logistics_Multi_Agents_Strands/
 - Explore queries 7-9 (Approval) for workflow management
 
 ### **Advanced Scenarios**  
-- Use queries 10-12 (Orchestration) for complex multi-agent workflows
-- Try queries 13-15 (Cross-Agent) for advanced coordination
-- Use Custom mode (C) to test your own logistics scenarios
+- Use queries 11-13 (Orchestration) for complex multi-agent workflows
+- Try queries 14-16 (Cross-Agent) for advanced coordination
+- Use Custom mode (100) to test your own logistics scenarios
+- Toggle streaming (200) to see responses with/without animated spinner
+- Switch models (300) to compare qwen2.5:3b (fast) vs 7b (powerful)
 
 ### **System Testing**
 - Test error handling with invalid requests
@@ -233,9 +300,15 @@ Logistics_Multi_Agents_Strands/
 
 #### Model Not Available
 ```bash
-❌ Model not found: qwen2.5:7b
+❌ Model not found: qwen2.5:3b
 ```
-**Solution**: Pull the model: `ollama pull qwen2.5:7b`
+**Solution**: Pull the model: `ollama pull qwen2.5:3b`
+
+#### Spinner Not Animating
+```bash
+💭 Thinking... ⠋ [static, not rotating]
+```
+**Solution**: Ensure Rich is installed: `pip install rich>=13.0.0`
 
 ### Debug Mode
 For detailed debugging, run with verbose output:
