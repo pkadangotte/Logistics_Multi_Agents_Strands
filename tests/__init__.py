@@ -1,27 +1,21 @@
 """
 Test package for the Logistics Multi-Agent System.
 
-This package contains comprehensive tests for:
-- Agent creation and functionality
-- Multi-agent orchestration
-- Tool execution and validation
-- System integration tests
+This package contains comprehensive pytest-based tests for:
+- Agent creation and functionality (test_agent_creation.py)
+- Individual agent testing (test_inventory_agent.py, test_fleet_agent.py, test_approval_agent.py)
+- Multi-agent orchestration and integration (test_orchestration.py)
+- Shared fixtures and utilities (conftest.py)
 
 Usage:
-    from tests.test_agents import main_enhanced_testing
-    main_enhanced_testing(factory)
+    # Run individual test modules
+    python -m pytest tests/test_agent_creation.py -v
+    
+    # Run all tests
+    python -m pytest tests/ -v
+    
+    # Run with coverage
+    python -m pytest tests/ --cov=Agents
 """
 
-from .test_agents import (
-    main_enhanced_testing,
-    run_test_suite,
-    create_test_agents,
-    run_interactive_tests
-)
-
-__all__ = [
-    'main_enhanced_testing',
-    'run_test_suite', 
-    'create_test_agents',
-    'run_interactive_tests'
-]
+# Test package initialization - no specific imports needed for pytest

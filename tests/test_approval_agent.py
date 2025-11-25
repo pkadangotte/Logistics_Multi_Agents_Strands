@@ -3,7 +3,28 @@ Test approval agent functionality.
 """
 
 import pytest
-from conftest import assert_agent_valid, assert_response_valid
+# conftest.py is automatically imported by pytest
+
+
+def assert_agent_valid(agent):
+    """Helper function to validate an agent."""
+    assert agent is not None
+    assert hasattr(agent, 'name')
+    assert hasattr(agent, 'send_message')
+    assert hasattr(agent, 'get_info')
+    
+    info = agent.get_info()
+    assert isinstance(info, dict)
+    assert 'name' in info
+    assert 'type' in info
+    assert 'total_tools' in info
+
+
+def assert_response_valid(response):
+    """Helper function to validate agent responses."""
+    assert response is not None
+    assert isinstance(response, str)
+    assert len(response.strip()) > 0
 
 
 class TestApprovalAgent:

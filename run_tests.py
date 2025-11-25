@@ -41,6 +41,10 @@ def main():
     project_root = Path(__file__).parent
     os.chdir(project_root)
     
+    # Use the virtual environment python if available
+    venv_python = project_root / ".venv" / "bin" / "python"
+    python_cmd = str(venv_python) if venv_python.exists() else "python"
+    
     if len(sys.argv) < 2:
         print("Usage: python run_tests.py [test_module|all|coverage]")
         print("\nAvailable test modules:")
@@ -69,13 +73,13 @@ def main():
     if test_option == 'all':
         # Run all test modules individually
         for module_name, module_path in test_modules.items():
-            cmd = ['python', '-m', 'pytest', module_path, '-v']
+            cmd = [python_cmd, '-m', 'pytest', module_path, '-v']
             if not run_command(cmd, f"{module_name.replace('_', ' ').title()} Tests"):
                 success = False
     
     elif test_option == 'coverage':
         # Run all tests with coverage
-        cmd = ['python', '-m', 'pytest', 'tests/', '--cov=Agents', '--cov-report=term-missing', '--cov-report=html']
+        cmd = [python_cmd, '-m', 'pytest', 'tests/', '--cov=Agents', '--cov-report=term-missing', '--cov-report=html']
         success = run_command(cmd, "All Tests with Coverage")
         
         if success:
@@ -84,7 +88,7 @@ def main():
     elif test_option in test_modules:
         # Run specific test module
         module_path = test_modules[test_option]
-        cmd = ['python', '-m', 'pytest', module_path, '-v']
+        cmd = [python_cmd, '-m', 'pytest', module_path, '-v']
         success = run_command(cmd, f"{test_option.replace('_', ' ').title()} Tests")
     
     else:

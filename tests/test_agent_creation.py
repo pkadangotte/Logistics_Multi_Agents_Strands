@@ -3,7 +3,21 @@ Test agent creation and basic functionality.
 """
 
 import pytest
-from conftest import assert_agent_valid
+# conftest.py is automatically imported by pytest
+
+
+def assert_agent_valid(agent):
+    """Helper function to validate an agent."""
+    assert agent is not None
+    assert hasattr(agent, 'name')
+    assert hasattr(agent, 'send_message')
+    assert hasattr(agent, 'get_info')
+    
+    info = agent.get_info()
+    assert isinstance(info, dict)
+    assert 'name' in info
+    assert 'type' in info
+    assert 'total_tools' in info
 
 
 class TestAgentCreation:
@@ -57,13 +71,24 @@ class TestAgentCreation:
         assert info['type'] == 'orchestrator'
         assert 'TestOrchestratorAgent' in info['name']
     
-    def test_invalid_agent_type(self, agent_factory):
-        """Test creating an invalid agent type raises ValueError."""
-        with pytest.raises(ValueError, match="Unknown agent type"):
-            agent_factory.create_agent(
-                agent_type="invalid_type",
-                name="InvalidAgent"
-            )
+    def test_invalid_agent_type(self, agent_factory, capsys):
+        """Test creating an invalid agent type defaults to orchestrator with warning."""
+        agent = agent_factory.create_agent(
+            agent_type="invalid_type",
+            name="InvalidAgent"
+        )
+        
+        # Should successfully create agent (graceful fallback)
+        assert_agent_valid(agent)
+        
+        # Should capture warning message
+        captured = capsys.readouterr()
+        assert "Warning: Unknown agent type 'invalid_type'" in captured.out
+        assert "using orchestrator configuration" in captured.out
+        
+        # Should default to orchestrator behavior (has all tools)
+        info = agent.get_info()
+        assert info['total_tools'] > 0  # Should have tools from orchestrator config
     
     def test_all_agents_created_successfully(self, test_agents):
         """Test that all test agents are created successfully."""
