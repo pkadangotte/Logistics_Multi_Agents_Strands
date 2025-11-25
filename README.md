@@ -9,11 +9,10 @@ This system demonstrates advanced multi-agent coordination in logistics operatio
 ## 🏗️ Architecture
 
 ```
-├── Agents/                     # Main application directory
+├── Agents/                     # Core application modules
 │   ├── generic_agent.py       # Enhanced GenericAgent wrapper class
 │   ├── agent_factory.py       # AgentFactory for creating specialized agents
 │   ├── data_setup.py          # Initial data setup and DataFrames
-│   ├── main.py               # Main execution script
 │   ├── data/                 # Data management modules
 │   │   ├── inventory_data.py
 │   │   ├── fleet_data.py
@@ -35,6 +34,7 @@ This system demonstrates advanced multi-agent coordination in logistics operatio
 │   ├── __init__.py
 │   ├── test_agents.py      # Comprehensive test suite
 │   └── run_tests.py        # Test runner script
+├── main.py                  # Main application entry point
 ├── requirements.txt         # Python dependencies
 └── README.md               # This file
 ```
@@ -117,7 +117,6 @@ ollama pull qwen2.5:7b
 ### Running the System
 
 ```bash
-cd Agents
 python main.py
 ```
 

@@ -1,15 +1,24 @@
+#!/usr/bin/env python3
 """
-Enhanced Main Entry Point for Logistics Multi-Agent System
+Main Entry Point for Logistics Multi-Agent System
 Provides options for different testing modes including agent discovery functionality.
 """
 
-from requirements import *
+import sys
+import os
+
+# Add the Agents directory to the Python path for imports
+sys.path.append(os.path.join(os.path.dirname(__file__), 'Agents'))
+
 from data_setup import initialize_dataframes
 from agent_factory import initialize_agent_factory
-from test_agents import main_enhanced_testing, run_test_suite, display_test_menu
 from data_providers.inventory_data_provider import InventoryDataProvider
 from data_providers.fleet_data_provider import FleetDataProvider
 from data_providers.approval_data_provider import ApprovalDataProvider
+
+# Import test functions
+sys.path.append(os.path.join(os.path.dirname(__file__), 'tests'))
+from test_agents import main_enhanced_testing, run_test_suite, display_test_menu
 
 
 def display_main_menu():
@@ -17,27 +26,15 @@ def display_main_menu():
     print("🚀 LOGISTICS MULTI-AGENT SYSTEM")
     print("=" * 70)
     print("Main Menu Options:")
-    print("1. Run Original Test Suite (Legacy)")
-    print("2. Run Enhanced Test Suite (Interactive)")
-    print("3. Quick Agent Creation Test")
-    print("4. Agent Discovery & Communication Test")
-    print("5. Complex Orchestration Test")
-    print("6. Emergency Simulation Test") 
-    print("7. Custom Test Menu")
-    print("8. Production Mode (Create Agents Only)")
+    print("1. Run Enhanced Test Suite (Interactive)")
+    print("2. Quick Agent Creation Test")
+    print("3. Agent Discovery & Communication Test")
+    print("4. Complex Orchestration Test")
+    print("5. Emergency Simulation Test") 
+    print("6. Full Integration Test Suite")
+    print("7. Production Mode (Create Agents Only)")
     print("0. Exit")
     print("=" * 70)
-
-
-def run_original_tests(factory):
-    """Run the original test suite (now using enhanced system)."""
-    print("\n🧪 RUNNING COMPREHENSIVE TEST SUITE")
-    print("=" * 70)
-    
-    # Run full integration tests using the enhanced system
-    agents = run_test_suite(factory, 6)  # Full Integration Test Suite
-    
-    return agents
 
 
 def run_quick_creation_test(factory):
@@ -79,16 +76,6 @@ def run_quick_creation_test(factory):
         return None
 
 
-def run_single_test(factory, test_number: int):
-    """Run a specific test by number."""
-    if test_number in [4, 5, 6]:
-        # These are enhanced tests
-        return run_test_suite(factory, test_number - 3)
-    else:
-        print(f"❌ Invalid test number: {test_number}")
-        return None
-
-
 def create_production_agents(factory):
     """Create agents for production use without testing."""
     print("\n🏭 PRODUCTION MODE - Creating Agents")
@@ -121,12 +108,11 @@ def create_production_agents(factory):
     return production_agents
 
 
-def main():
-    """Enhanced main function with menu options."""
+def initialize_system():
+    """Initialize the logistics system components."""
     print("🌟 INITIALIZING LOGISTICS MULTI-AGENT SYSTEM")
     print("=" * 70)
     
-    # Setup data and factory
     try:
         print("📊 Setting up logistics data...")
         inventory_df, agv_df, routes_df, approval_df = initialize_dataframes()
@@ -141,16 +127,32 @@ def main():
         factory = initialize_agent_factory(inventory_manager, fleet_manager, approval_manager)
         print("✅ Agent factory initialized")
         
+        return factory
+        
     except Exception as e:
         print(f"❌ Initialization failed: {str(e)}")
-        return
+        print("\nPlease ensure:")
+        print("1. All dependencies are installed: pip install -r requirements.txt")
+        print("2. Ollama is running: ollama serve")
+        print("3. Required model is available: ollama pull qwen2.5:7b")
+        raise
+
+
+def main():
+    """Main function with menu options."""
+    
+    # Initialize system
+    try:
+        factory = initialize_system()
+    except Exception:
+        return 1
     
     # Main menu loop
     while True:
         display_main_menu()
         
         try:
-            choice = int(input("Enter your choice (0-8): "))
+            choice = int(input("Enter your choice (0-7): "))
         except ValueError:
             print("❌ Invalid input. Please enter a number.")
             continue
@@ -160,37 +162,28 @@ def main():
             break
             
         elif choice == 1:
-            run_original_tests(factory)
-            
-        elif choice == 2:
             main_enhanced_testing(factory)
             
-        elif choice == 3:
+        elif choice == 2:
             run_quick_creation_test(factory)
             
-        elif choice == 4:
+        elif choice == 3:
             run_test_suite(factory, 3)  # Agent Discovery Test
             
-        elif choice == 5:
+        elif choice == 4:
             run_test_suite(factory, 4)  # Complex Orchestration Test
             
-        elif choice == 6:
+        elif choice == 5:
             run_test_suite(factory, 5)  # Emergency Simulation Test
             
+        elif choice == 6:
+            run_test_suite(factory, 6)  # Full Integration Test Suite
+            
         elif choice == 7:
-            # Show enhanced test menu and let user choose
-            display_test_menu()
-            try:
-                test_choice = int(input("Enter enhanced test choice (0-7): "))
-                run_test_suite(factory, test_choice)
-            except ValueError:
-                print("❌ Invalid test choice.")
-                
-        elif choice == 8:
             create_production_agents(factory)
             
         else:
-            print("❌ Invalid choice. Please select 0-8.")
+            print("❌ Invalid choice. Please select 0-7.")
         
         # Ask if user wants to continue
         print("\n" + "=" * 70)
@@ -198,7 +191,10 @@ def main():
         if continue_choice not in ['y', 'yes']:
             print("👋 Goodbye!")
             break
+    
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    exit_code = main()
+    sys.exit(exit_code)
