@@ -1,674 +1,443 @@
-# 🤖 Multi-Agent Logistics System
+# Logistics Multi-Agent System with Strands Framework
 
-[![Python](https://img.shields.io/badge/Python-3.12%2B-blue.svg)](https://python.org)
-[![Flask](https://img.shields.io/badge/Flask-Web%20Interface-green.svg)](https://flask.palletsprojects.com/)
-[![AI-Powered](https://img.shields.io/badge/AI-Ollama%20Enhanced-orange.svg)](https://ollama.ai)
-[![Real-Time](https://img.shields.io/badge/Real--Time-SSE%20Streaming-success.svg)]()
+A sophisticated multi-agent logistics orchestration system built using the Strands AI framework, featuring specialized agents for inventory management, fleet operations, approval workflows, and intelligent coordination.
 
-> **A sophisticated multi-agent system that orchestrates manufacturing logistics workflows. Watch intelligent agents coordinate inventory checks, AGV fleet management, and approval processes in real-time through an interactive web dashboard.**
+## 🚀 **Overview**
 
-## 🎯 What This System Demonstrates
+This system demonstrates advanced multi-agent coordination in logistics operations, where specialized AI agents work together to handle complex supply chain tasks autonomously. Each agent has domain-specific tools and capabilities while maintaining the ability to communicate with other agents through Agent-to-Agent (A2A) communication.
 
-**Complete Autonomous Logistics Workflow**: Submit a parts request through the web interface and watch five specialized AI agents work together:
-
-1. **🎯 Logistics Orchestrator** - Coordinates the entire workflow and manages agent communication
-2. **📦 Inventory Agent** - Checks stock availability across multiple warehouses  
-3. **🚛 Fleet Agent** - Assigns optimal AGVs based on capacity, battery, and location
-4. **🤖 AGV Agent** - Individual vehicle control with real-time movement and mission execution
-5. **⚖️ Approver Agent** - Reviews requests with intelligent cost and risk analysis
-
-**Live Real-Time Tracking**: Watch the complete AGV lifecycle unfold - from accepting missions to pickup, loading, delivery, unloading, and completion - all with live status updates and progress visualization.
-
-## 🚀 Quick Start
-
-### Start the System
-```bash
-# Install dependencies
-pip install -r requirements.txt
-
-# Launch the multi-agent system
-python3 strands_flask_app.py
-```
-
-### Access the Web Interface
-Open **http://localhost:5555** in your browser to see the interactive dashboard.
-
-### Try a Sample Request
-1. **Part Number**: `HYDRAULIC-PUMP-HP450`
-2. **Quantity**: `15`
-3. **Destination**: `Production Line A`
-4. **Priority**: `Medium`
-
-Click "🚀 Start Workflow" and watch the agents coordinate the entire logistics process in real-time!
-
-## 🎬 Live Agent Coordination
-
-Watch the **Live Agent Feed** as four specialized agents work together:
-
-### Real-Time Workflow Visualization
-```
-🎯 Step 1: Analysis     → Logistics Orchestrator coordinates the request
-📦 Step 2: Inventory    → Agent checks stock across warehouses  
-🚛 Step 3: Fleet        → AGV assignment and route planning
-💰 Step 4: Cost         → Automated cost calculation
-⚖️ Step 5: AGV Dispatch → AGV accepts mission and starts journey
-� Step 6: Pickup       → AGV moves to pickup location
-✅ Step 7: Delivery     → Complete AGV lifecycle tracking
-```
-
-### Live Agent Messages
-The system provides real-time updates showing each agent's actions:
-- **🎯 Accepting delivery mission MISSION-HYDRAULIC-PUMP-HP450-REQ-1762680696**
-- **🚶 Moving to pickup location Central Warehouse**
-- **✅ Reached pickup location Central Warehouse (Battery: 85.0%)**
-- **📦 Loading 15 pieces of HYDRAULIC-PUMP-HP450**
-- **🚚 Moving to delivery location Production Line A with 15 pieces**
-- **📤 Unloading 15 pieces at Production Line A**
-- **✅ Mission completed successfully**
-
-## 🧠 Key Features
-
-### � **Interactive Web Dashboard**
-- **Real-Time Progress Tracking**: Visual workflow steps from analysis to delivery
-- **Live Agent Feed**: Watch 22+ live messages stream from the AGV and coordination agents
-- **Smart Forms**: Dropdown menus for parts, destinations, and priorities with validation
-- **Status Cards**: Live updates showing inventory levels, fleet status, and costs
-
-### 🤖 **Complete AGV Lifecycle Tracking**
-- **Mission Acceptance**: Watch AGVs accept delivery missions with unique IDs
-- **Movement Tracking**: Real-time location updates from warehouse to production line
-- **Loading Operations**: Detailed cargo handling with piece counts and battery monitoring
-- **Delivery Confirmation**: Complete mission lifecycle from start to successful completion
-
-### 🎯 **Intelligent Workflow Orchestration**  
-- **Multi-Agent Coordination**: Four specialized agents work together seamlessly
-- **Real-Time Communication**: Server-Sent Events (SSE) for instant updates
-- **State Management**: Tracks workflow progress through multiple phases
-- **Error Handling**: Graceful management of edge cases and system states
-
-### 📦 **Smart Inventory Management**
-- **Multi-Warehouse Support**: Central Warehouse, Production Line locations
-- **Stock Validation**: Real-time availability checking before workflow execution
-- **Cost Calculation**: Automatic pricing with quantity and priority adjustments
-- **Availability Status**: Clear indicators for stock levels and locations
-
-## 🏗️ System Architecture
+## 🏗️ **Architecture**
 
 ```
-🌐 Web Interface (Flask + SSE)              👤 User Experience
-├── Interactive Dashboard                     ├── Submit Requests
-├── Live Agent Feed (22+ messages)          ├── Monitor Progress  
-├── Real-time Progress Tracking             ├── Visual Status Cards
-└── Responsive Design                       └── Live Updates
-                    │
-    ┌───────────────┼─────────────────────────┐
-    │               │                         │
-    ▼               ▼                         ▼
-🎯 LOGISTICS     📦 INVENTORY      🚛 FLEET        🤖 AGV         ⚖️ APPROVER
-ORCHESTRATOR       AGENT           AGENT          AGENT          AGENT
-│                  │               │              │              │
-├─ Workflow Mgmt   ├─ Stock Check  ├─ AGV Assign  ├─ Movement     ├─ Cost Review
-├─ Agent Coord     ├─ Availability ├─ Route Plan  ├─ Navigation   ├─ Risk Analysis
-├─ Status Track    ├─ Multi-Whse   ├─ Battery     ├─ Loading      ├─ Approval Flow
-├─ State Mgmt      ├─ Cost Calc    ├─ Capacity    ├─ Delivery     ├─ Multi-Tier
-└─ Error Handle    └─ Validation   └─ Fleet Mgmt  ├─ Unloading    └─ Intelligence
-                                                  └─ Mission Exec
 
-💾 In-Memory Data Store                     🤖 AI Enhancement
-├── Parts Catalog (4 parts)                ├── Ollama Integration
-├── Warehouse Locations                    ├── llama3:latest
-├── AGV Fleet Status (4 vehicles)          ├── Natural Language
-├── Request State Management               ├── Decision Support
-└── Live Messaging System                  └── Fallback Logic
+├── .git/                    # Git version control
+├── .venv/                   # Python virtual environment
+├── agents/                  # Main application directory
+│   ├── agents.py           # Agent factory and LogisticsAgent class
+│   ├── approval_manager.py # Approval workflow management
+│   ├── data_setup.py       # Initial data setup and DataFrames
+│   ├── fleet_manager.py    # AGV fleet management
+│   ├── inventory_manager.py# Inventory operations
+│   ├── main.py            # Main execution script
+│   ├── requirements.py     # Dependencies and imports
+│   ├── test_agents.py      # Comprehensive test suite
+│   └── tool_providers.py   # Strands tool wrapper classes
+└── README.md               # This file
 ```
 
-## 📦 Available Test Data
+## 🤖 **Agent Architecture**
 
-### 🔧 **Sample Parts for Testing**
+### **Agent Types**
 
-| Part Number | Stock | Location | Cost/Unit | Description |
-|-------------|-------|----------|-----------|-------------|
-| `HYDRAULIC-PUMP-HP450` | 24 units | Central Warehouse | $245.00 | High-value hydraulic component |
-| `PART-ABC123` | 85 units | Warehouse A | $12.50 | Standard production part |
-| `PART-DEF456` | 120 units | Warehouse A | $8.25 | Common component |
-| `PART-XYZ789` | 42 units | Warehouse B | $18.75 | Specialized part |
+1. **📦 SmartInventoryAgent** \- Manages inventory operations
+    * Tools: 8 inventory-specific + 3 A2A tools = **11 total tools**
+    * Capabilities: Part lookup, availability checking, reservations, stock analysis
+2. **🚛 IntelligentFleetAgent** \- Manages AGV fleet operations
+    * Tools: 7 fleet-specific + 3 A2A tools = **10 total tools**
+    * Capabilities: AGV optimization, fleet status, route planning, dispatch
+3. **⚖️ ComplianceApprovalAgent** \- Handles approval workflows
+    * Tools: 6 approval-specific + 3 A2A tools = **9 total tools**
+    * Capabilities: Threshold checking, compliance validation, approval processing
+4. **🎯 MasterLogisticsOrchestrator** \- Coordinates multi\-domain operations
+    * Tools: 21 combined + 3 A2A tools = **24 total tools**
+    * Capabilities: Cross-domain coordination, complex workflow orchestration
 
-### 🚛 **AGV Fleet Status**
+### **LogisticsAgent Class**
 
-| AGV ID | Capacity | Battery | Base Location | Status |
-|--------|----------|---------|---------------|--------|
-| AGV-001 | 100 pieces | 85% | AGV_BASE | Ready for Delivery |
-| AGV-002 | 50 pieces | 92% | AGV_BASE | Ready for Delivery |
-| AGV-003 | 100 pieces | 87% | AGV_BASE | Ready for Delivery |
-| AGV-004 | 25 pieces | 82% | AGV_BASE | Ready for Delivery |
+The `LogisticsAgent` class is a wrapper around the Strands `Agent` that provides:
 
-### 🏭 **Delivery Destinations**
-
-- **Production Line A** - Main assembly line
-- **Production Line B** - Secondary production 
-- **Central Warehouse** - Primary storage facility
-- **Quality Control** - Inspection station
-
-## 📋 System Requirements
-
-### 💻 **Prerequisites**
-- **Python 3.12+** - Core runtime environment
-- **Modern Web Browser** - For accessing the interactive dashboard
-
-### 📚 **Dependencies**
-```bash
-flask>=2.0.0           # Web framework and SSE support
-requests               # HTTP client for agent communication  
-psutil                 # System process management
+``` python
+class LogisticsAgent:
+    def __init__(
+        self, 
+        name: str,
+        agent_type: str, 
+        ollama_model,
+        system_prompt: str,
+        enable_a2a: bool = True,
+        data_manager_tools: List = None
+    ):
 ```
 
-### 🤖 **Optional AI Enhancement**
-```bash
-# Install Ollama for enhanced AI decision-making
-curl -fsSL https://ollama.ai/install.sh | sh
-ollama pull llama3:latest
-```
-*Note: System automatically falls back to rule-based logic if Ollama is unavailable*
+**Key Features:**
 
-### ⚡ **Installation**
-```bash
-# Clone repository
-git clone [repository-url]
+* **Domain-Specific Tool Assignment**: Each agent only gets tools relevant to their domain
+* **A2A Communication**: Agents can discover and communicate with each other
+* **Enhanced Logging**: Tool calls are tracked with agent names for transparency
+* **JSON Serialization**: Handles pandas data type conversion for tool responses
+* **Modular Design**: Easy to extend with new capabilities
+
+### **AgentFactory Class**
+
+The `AgentFactory` centralizes agent creation and configuration:
+
+``` python
+class AgentFactory:
+    def __init__(
+        self,
+        inventory_manager=None,
+        fleet_manager=None, 
+        approval_manager=None
+    ):
+```
+
+**Factory Methods:**
+
+* `create_ollama_model()` \- Creates OllamaModel instances
+* `create_agent()` \- Creates specialized LogisticsAgent instances
+* `_get_system_prompt()` \- Provides domain\-specific prompts
+
+**Agent Creation Process:**
+
+1. **Tool Selection**: Factory assigns domain-specific tools based on agent type
+2. **Model Creation**: OllamaModel configured with qwen2.5:7b and localhost:11434
+3. **System Prompt**: Domain-specific prompts guide agent behavior
+4. **A2A Integration**: Agent-to-Agent communication tools added if enabled
+5. **Agent Instantiation**: Strands Agent created with proper configuration
+
+## 🛠️ **Data Managers**
+
+### **InventoryDataManager**
+
+* Manages pandas DataFrame with inventory data
+* Handles reservations and availability checks
+* Provides real-time stock analysis
+* JSON-serializable output for tool integration
+
+### **FleetDataManager**
+
+* Manages AGV fleet operations and routes
+* Optimizes AGV selection based on efficiency algorithms
+* Tracks dispatch status and fleet metrics
+* Handles route planning and cost calculations
+
+### **ApprovalDataManager**
+
+* Manages approval thresholds and workflows
+* Validates compliance requirements
+* Tracks approval history and requests
+* Automates approval routing based on cost thresholds
+
+## 🔧 **Tool Providers**
+
+Each data manager is wrapped by a corresponding tool provider that exposes functionality as Strands tools:
+
+### **InventoryAgentToolProvider**
+
+``` python
+@tool(name="get_part_info")
+@tool(name="check_availability") 
+@tool(name="reserve_inventory")
+@tool(name="release_reservation")
+@tool(name="search_parts")
+@tool(name="get_low_stock_items")
+@tool(name="get_inventory_summary")
+@tool(name="get_reservation_history")
+```
+
+### **FleetAgentToolProvider**
+
+``` python
+@tool(name="get_available_agvs")
+@tool(name="find_optimal_agv")
+@tool(name="dispatch_agv")
+@tool(name="get_fleet_status")
+@tool(name="get_route_info")
+@tool(name="update_agv_status")
+@tool(name="complete_task")
+```
+
+### **ApprovalAgentToolProvider**
+
+``` python
+@tool(name="check_approval_threshold")
+@tool(name="create_approval_request")
+@tool(name="process_approval")
+@tool(name="check_compliance")
+@tool(name="get_approval_history")
+@tool(name="get_pending_approvals")
+```
+
+## 🚦 **Getting Started**
+
+### **Prerequisites**
+
+* Python 3.8+
+* Ollama server running on localhost:11434
+* qwen2.5:7b model pulled in Ollama
+
+### **Installation**
+
+1. **Clone the repository:**
+
+``` bash
+git clone <repository-url>
 cd Logistics_Multi_Agents_Strands
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Start the system
-python3 strands_flask_app.py
 ```
 
-## 🧪 Testing Scenarios
+2. **Set up virtual environment:**
 
-### 🎯 **Recommended Test Cases**
-
-#### **Standard Workflow Test**
-```
-Part: HYDRAULIC-PUMP-HP450
-Quantity: 15
-Destination: Production Line A
-Expected: ✅ Complete workflow with AGV tracking
-```
-
-#### **High Quantity Test**  
-```
-Part: PART-DEF456
-Quantity: 50
-Destination: Production Line B
-Expected: ✅ Large order processing
-```
-
-#### **Multiple Parts Test**
-```
-Try different parts to see varying inventory levels:
-- PART-ABC123 (85 available)
-- PART-XYZ789 (42 available) 
-- HYDRAULIC-PUMP-HP450 (24 available)
-```
-
-### 📊 **What to Observe**
-
-**🎯 Real-Time Progress**:
-- Watch the workflow progress bar advance through 7 stages
-- Monitor live agent messages in the feed panel
-- See status cards update with current information
-
-**🤖 AGV Lifecycle**:
-- Mission acceptance with unique IDs
-- Movement tracking with battery levels
-- Loading/unloading operations with piece counts
-- Mission completion confirmations
-
-**🔄 Live Updates**:
-- Server-Sent Events streaming
-- No page refresh needed
-- Persistent connection status
-
-## � Technical Details
-
-### � **Web Interface Technology**
-- **Flask Framework**: Lightweight Python web server
-- **Server-Sent Events (SSE)**: Real-time message streaming
-- **Responsive Design**: Works on desktop and mobile browsers
-- **Live Agent Feed**: 22+ messages streamed during workflow execution
-
-### 🤖 **Agent Architecture**
-- **Modular Design**: Five specialized agents with distinct responsibilities
-- **Async Communication**: Non-blocking agent coordination
-- **State Management**: Persistent workflow tracking across requests
-- **Error Resilience**: Graceful handling of agent failures
-
-### 💾 **Data Management**
-- **In-Memory Storage**: No database setup required
-- **Session Persistence**: State maintained during browser sessions
-- **Real-Time Updates**: Instant synchronization across all components
-- **Configuration-Driven**: Easy modification of parts, AGVs, and settings
-
-## 🛠️ Configuration-Based Customization
-
-### � **Adding New Parts**
-Edit `Agents/InventoryAgent.py` to add new parts to the inventory:
-```python
-## 🛠️ Central Configuration System
-
-### 🎛️ **System Configuration**
-All system settings are managed through **JSON configuration files** in the `config/` directory:
-
-**`config/system_config.json`** - Main system settings:
-```json
-{
-  "system_settings": {
-    "ai_config": {
-      "llm_backend": "ollama",
-      "default_model": "qwen2.5:7b",
-      "temperature": 0.1,
-      "timeout_seconds": 30
-    },
-    "server_config": {
-      "host": "127.0.0.1", 
-      "port": 5555
-    }
-  }
-}
-```
-
-### 📦 **Adding New Parts**
-Edit `config/inventory_config.json` to add new parts:
-```json
-"YOUR-NEW-PART": {
-    "description": "New Part Description",
-    "available_quantity": 150,
-    "warehouse_location": "Central Warehouse", 
-    "unit_cost": 45.00,
-    "reorder_point": 25
-}
-```
-
-### 🚛 **Adding AGVs**
-Modify `config/fleet_config.json` to expand the fleet:
-```json
-"AGV-005": {
-    "agv_id": "AGV-005",
-    "type": "heavy_duty_agv",
-    "capacity_pieces": 75,
-    "status": "AVAILABLE", 
-    "battery_level": 90
-}
-```
-
-### 🏭 **Adding Destinations**
-Update delivery locations in `config/fleet_config.json`:
-```json
-"New Production Line": {
-    "name": "Production Line C",
-```
-
-### 🚛 **Adding AGVs**
-Modify `Agents/FleetAgent.py` to expand the fleet:
-```python
-"AGV-005": {
-    "type": "heavy_duty_agv",
-    "capacity_pieces": 75,
-    "status": "AVAILABLE", 
-    "battery_level": 90
-}
-```
-
-### 🏭 **Adding Destinations**
-Update delivery locations in `Agents/FleetAgent.py`:
-```python
-"New Production Line": {
-    "location_id": "PROD_LINE_C",
-    "distance_km": 2.1,
-    "travel_time_minutes": 8
-}
-```
-
-## 🤖 The Five Agents
-
-### 🎯 **Logistics Orchestrator Agent**
-**Master workflow coordinator** - Manages the entire request lifecycle and coordinates communication between all other agents.
-
-### 📦 **Inventory Agent** 
-**Smart stock management** - Checks availability across warehouses, calculates costs, and validates inventory levels for incoming requests.
-
-### 🚛 **Fleet Agent**
-**AGV fleet coordination** - Assigns optimal vehicles based on capacity and battery levels, manages overall fleet operations and routing.
-
-### 🤖 **AGV Agent**
-**Individual vehicle control** - Handles real-time movement, navigation, loading/unloading operations, and mission execution for each autonomous vehicle.
-
-### ⚖️ **Approver Agent**
-**Intelligent approval** - Reviews requests for cost analysis, risk assessment, and multi-tier approval workflows.
-
-## � Troubleshooting
-
-### � **Common Issues**
-
-**"Port already in use"**
-```bash
-# Check what's using port 5555
-lsof -i :5555
-
-# Kill any existing Flask processes  
-pkill -f strands_flask_app.py
-
-# Try starting again
-python start.py
-```
-
-**"Agents not responding"**
-```bash
-# Check the server logs
-tail -20 server.log
-
-# Verify Strands SDK is installed
-pip show strands
-
-# Test agents directly
-python test_complete_integration.py
-```
-
-**"Import errors"** 
-```bash
-# Reinstall dependencies
-pip install -r requirements.txt
-
-# Verify Python version (3.9+)
-python --version
-```
-
-### � **Getting Help**
-
-**View Logs:**
-```bash
-# Server logs (if running in background)
-tail -f server.log
-
-# Direct run for detailed output
-python strands_flask_app.py
-```
-
-**Test Individual Components:**
-```bash
-# Test just the orchestrator
-python test_orchestrator_agent.py
-
-# Test all agent integration
-python test_complete_integration.py
-
-# Check available parts
-cat INVENTORY_PARTS_REFERENCE.md
-```
-
-## � What Makes This Special
-
-### 🤖 **Strands Agent SDK Implementation**
-- **Proper @tool registration** - All 20 agent methods properly decorated  
-- **Direct agent communication** - Optimized for performance, no message passing overhead
-- **Zero external dependencies** - No databases, no cloud services, no configuration
-- **Production-ready patterns** - Global instances, error handling, comprehensive logging
-
-### 🏭 **Real Manufacturing Workflow** 
-- **Authentic business logic** - Based on actual manufacturing replenishment processes
-- **Realistic data** - Parts, costs, AGVs, and approvers reflect real-world scenarios  
-- **Complete orchestration** - Full workflow from request submission to delivery confirmation
-- **Intelligent coordination** - AI-powered decisions with rule-based fallbacks
-
-### 🚀 **Ready to Deploy**
-- **One command start** - `python start.py` and everything works
-- **Comprehensive testing** - Full integration test suite validates all functionality
-- **Clear documentation** - Complete setup, usage, and troubleshooting guides
-- **Educational value** - Perfect for learning Strands Agent SDK patterns
-
-### 🔬 **Technical Excellence**
-- **Clean architecture** - Separation of concerns between agents
-- **Performance optimized** - In-memory operations, direct method calls
-- **Extensible design** - Easy to add new agents, tools, or workflows  
-- **Error resilience** - Graceful degradation and comprehensive error handling
-
-## 🔧 Troubleshooting
-
-### 🚨 **Common Issues**
-
-**Server Won't Start:**
-```bash
-# Check if port 5555 is in use
-lsof -i :5555
-
-# Kill conflicting processes
-pkill -f strands_flask_app.py
-
-# Try starting again
-python start.py
-```
-
-**Server Won't Stop:**
-```bash
-# Force stop
-sudo python stop.py
-
-# Manual cleanup
-pkill -9 -f strands_flask_app.py
-rm -f .server.pid
-```
-
-**Web UI Not Loading:**
-```bash
-# Verify server is running
-lsof -i :5555
-
-# Check server logs
-tail -20 server.log
-
-# Test local connection
-curl -I http://127.0.0.1:5555
-```
-
-**AI Agents Not Responding:**
-```bash
-# Check Ollama connection (if using)
-ollama list
-
-# Server falls back to rule-based mode automatically
-# Check logs for "fallback mode" messages
-```
-
-### 📋 **Dependency Issues**
-
-**Missing Dependencies:**
-```bash
-# Reinstall requirements
-pip install -r requirements.txt
-
-# Update specific packages
-pip install --upgrade flask psutil requests
-```
-
-**Python Version:**
-```bash
-# Check Python version
-python --version
-# Requires Python 3.13+
-
-# Use specific Python version
-python3.13 start.py
-```
-
-**Virtual Environment:**
-```bash
-# Create fresh environment
+``` bash
 python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+```
+
+3. **Install dependencies:**
+
+``` bash
+pip install pandas ollama strands-agents strands-tools
+```
+
+4. **Start Ollama server:**
+
+``` bash
+ollama serve
+ollama pull qwen2.5:7b
+```
+
+### **Running the System**
+
+1. **Execute the main application:**
+
+``` bash
+cd agents
+python main.py
+```
+
+2. **Run individual components:**
+
+``` bash
+# Test only data setup
+python data_setup.py
+
+# Test specific managers
+python -c "from inventory_manager import *; # your code here"
+```
+
+## 📊 **Usage Examples**
+
+### **Creating Individual Agents**
+
+``` python
+from agents import AgentFactory
+from data_setup import initialize_dataframes
+from inventory_manager import InventoryDataManager
+
+# Setup data
+inventory_df, agv_df, routes_df, approval_df = initialize_dataframes()
+inventory_manager = InventoryDataManager(inventory_df)
+
+# Create factory
+factory = AgentFactory(inventory_manager=inventory_manager)
+
+# Create inventory agent
+inventory_agent = factory.create_agent(
+    agent_type="inventory",
+    name="WarehouseAgent",
+    enable_a2a=True
+)
+
+# Use the agent
+response = inventory_agent.send_message(
+    "Check availability for 10 units of PART-ABC123"
+)
+```
+
+### **Multi-Agent Coordination**
+
+``` python
+# Create orchestrator with all capabilities
+orchestrator = factory.create_agent(
+    agent_type="orchestrator", 
+    name="MasterCoordinator"
+)
+
+# Complex multi-domain request
+complex_task = """
+I need to process a production order:
+- 30 units of HYDRAULIC-PUMP-HP450
+- Transport from Central Warehouse to Production Line A
+- Handle approvals for $7,350 total cost
+- Coordinate the entire workflow
+"""
+
+response = orchestrator.send_message(complex_task)
+```
+
+## 🔍 **Tool Execution Tracking**
+
+The system provides transparent tool execution tracking:
+
+```
+MasterLogisticsOrchestrator -> Tool #1: check_availability
+MasterLogisticsOrchestrator -> Tool #2: find_optimal_agv
+MasterLogisticsOrchestrator -> Tool #3: check_approval_threshold
+MasterLogisticsOrchestrator -> Tool #4: reserve_inventory
+MasterLogisticsOrchestrator -> Tool #5: dispatch_agv
+```
+
+Each tool call shows:
+
+* **Agent Name**: Which agent is executing
+* **Tool Number**: Sequential execution order
+* **Tool Name**: Specific function being called
+
+## 🧪 **Testing**
+
+The system includes comprehensive tests in `test_agents.py`:
+
+``` bash
+cd agents
+python test_agents.py
+```
+
+**Test Coverage:**
+
+* ✅ Agent creation and configuration
+* ✅ Individual agent functionality
+* ✅ Multi-domain orchestration
+* ✅ Tool execution and response validation
+* ✅ A2A communication capabilities
+* ✅ Error handling and edge cases
+
+## 🎯 **Key Features**
+
+### **Domain-Specific Intelligence**
+
+* Each agent specializes in specific logistics domains
+* Tools are carefully curated per agent type
+* System prompts guide domain-specific behavior
+
+### **Intelligent Orchestration**
+
+* Orchestrator agent coordinates complex workflows
+* Sequential tool execution with dependency awareness
+* Real-time adaptation based on actual system state
+
+### **Agent-to-Agent Communication**
+
+* Built-in A2A discovery and messaging capabilities
+* Agents can collaborate on complex tasks
+* Transparent inter-agent communication tracking
+
+### **Production-Ready Architecture**
+
+* Modular design for easy extension
+* Comprehensive error handling
+* JSON serialization for API integration
+* Transparent logging and monitoring
+
+### **Real-Time Operations**
+
+* Live inventory management
+* Dynamic AGV fleet optimization
+* Automated approval workflows
+* Cost-aware decision making
+
+## 🔧 **Configuration**
+
+### **Model Configuration**
+
+``` python
+# Default Ollama configuration
+OllamaModel(
+    model_id="qwen2.5:7b",
+    host="http://localhost:11434"
+)
+```
+
+### **Agent Specialization**
+
+Each agent type receives domain-specific system prompts:
+
+* **Inventory**: "You are specialized in INVENTORY MANAGEMENT ONLY..."
+* **Fleet**: "You are specialized in FLEET MANAGEMENT ONLY..."
+* **Approval**: "You are specialized in APPROVAL WORKFLOWS ONLY..."
+* **Orchestrator**: "As the Logistics Orchestrator, you have access to ALL management tools..."
+
+## 🚧 **Extension Points**
+
+### **Adding New Agent Types**
+
+1. Create new data manager class
+2. Implement corresponding tool provider
+3. Add agent type to AgentFactory
+4. Define domain-specific system prompt
+
+### **Adding New Tools**
+
+1. Add method to appropriate data manager
+2. Wrap with `@tool` decorator in tool provider
+3. Update tool assignment in AgentFactory
+4. Add tests for new functionality
+
+### **Custom Workflows**
+
+The orchestrator agent can handle custom workflows by combining existing tools in intelligent sequences based on natural language requests.
+
+## 📈 **Performance Considerations**
+
+* **Tool Caching**: Strands framework provides built-in tool result caching
+* **Model Optimization**: Uses efficient qwen2.5:7b model for fast responses
+* **Data Management**: Pandas DataFrames for efficient data operations
+* **Memory Management**: Proper cleanup and resource management
+
+## 🔒 **Security & Compliance**
+
+* **Approval Workflows**: Built-in approval thresholds and compliance checking
+* **Tool Isolation**: Domain-specific tool access prevents unauthorized operations
+* **Audit Trail**: Complete logging of all tool executions and decisions
+* **Input Validation**: Robust parameter validation and error handling
+
+## 🤝 **Contributing**
+
+1. Fork the repository
+2. Create a feature branch
+3. Add comprehensive tests
+4. Ensure all existing tests pass
+5. Submit a pull request with detailed description
+
+## 📝 **License**
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🆘 **Troubleshooting**
+
+### **Common Issues**
+
+1. **Ollama Connection Errors**
+
+``` bash
+# Ensure Ollama is running
+ollama serve
+
+# Check model availability
+ollama list
+```
+
+2. **Import Errors**
+
+``` bash
+# Ensure virtual environment is activated
 source .venv/bin/activate
-pip install -r requirements.txt
+
+# Install missing dependencies
+pip install strands-agents strands-tools
 ```
 
-## 🎉 Advanced Features
+3. **Tool Execution Failures**
+    * Check JSON serialization issues with pandas data types
+    * Verify tool parameter types and validation
+    * Review agent system prompts and tool assignments
 
-### 🔄 **Strands Agent Integration**
-- All 4 agents built on Strands Agent SDK framework
-- 20 total @tool decorated methods across all agents
-- Direct agent-to-agent communication via global instances
-- Zero external database dependencies (pure in-memory)
+## 🎉 **Success Metrics**
 
-### 📊 **Testing & Validation**
-- Comprehensive integration test suite (`test_complete_integration.py`)
-- Individual agent testing with tool validation
-- Pre-loaded inventory data for immediate testing
-- Real-time agent method execution verification
+When properly configured, you should see:
 
-### 🤖 **AI Enhancement**
-- Ollama integration for advanced AI capabilities
-- Automatic fallback to rule-based logic if Ollama unavailable
-- Enhanced decision-making with natural language processing
-- Intelligent cost analysis and risk assessment
+* ✅ All 4 agent types created successfully
+* ✅ Tool counts showing domain + A2A tools
+* ✅ Successful tool executions with agent name tracking
+* ✅ Complex multi-domain workflows completing successfully
+* ✅ Real-time inventory, fleet, and approval operations
 
-### 🔧 **Zero-Dependency Architecture**
-- No AWS credentials required (DynamoDB removed)
-- No external database setup needed
-- Pure in-memory storage with session persistence
-- Simplified deployment with maximum portability
-
-## 🎯 Perfect For
-
-- **🏭 Manufacturing Automation**: Real-world logistics coordination simulation
-- **🤖 Strands Agent SDK Learning**: Multi-agent system architecture with @tool registration
-- **🌐 Web Development**: Flask-based real-time dashboard development
-- **📊 Process Optimization**: Workflow analysis and bottleneck identification  
-- **🚛 AGV Systems**: Autonomous vehicle coordination and management
-- **🔧 Zero-Dependency Deployment**: No databases, no cloud services required
-- **🧪 Agent Testing**: Complete test suite for validation and development
-
-## 📞 Support & Development
-
-### 🔍 **Debugging**
-- Server logs: `tail -f server.log`
-- Browser console: F12 Developer Tools
-- Agent communication: Watch real-time messages in web UI
-
-### 🛠️ **Development Mode**
-```bash
-# Run with debug output
-python strands_flask_app.py
-
-# Watch for file changes
-# (Note: Debug mode disabled in production for stability)
-```
-
-### 📈 **Performance Tuning**
-- Adjust polling intervals in `templates/index.html`
-- Modify AGV timing in `strands_flask_app.py`
-- Optimize agent response times in `Agents/` files
-
----
-
-## 🎉 You're All Set!
-
-This is a **complete, production-ready manufacturing replenishment system** built with Strands Agent SDK:
-
-✅ **Zero setup complexity** - Install deps, run `python start.py`, done  
-✅ **Real manufacturing workflow** - Authentic part requests → inventory → AGVs → approvals  
-✅ **Strands Agent SDK best practices** - 4 agents, 20 @tool methods, proper patterns  
-✅ **No external dependencies** - No databases, no cloud services, pure in-memory  
-✅ **Comprehensive testing** - Everything validated and ready to use  
-✅ **Educational value** - Perfect example of multi-agent coordination  
-
-### � **Start Using It:**
-
-```bash
-python start.py                    # Start the system
-# → Open http://127.0.0.1:5555    # Use the web interface  
-# → Submit requests with valid parts (PART-ABC123, etc.)
-# → Watch 4 agents coordinate in real-time
-python stop.py                     # Stop when done
-```
-
-### 💡 **Learn From It:**
-- Study the Strands Agent patterns in `Agents/`
-- Examine the @tool decorations and agent communication  
-- Run the tests to see everything working
-- Extend it with your own agents and workflows
-
-This system demonstrates **professional-grade multi-agent architecture** with the **Strands Agent SDK** - use it as a foundation for your own manufacturing automation projects!
-
----
-
-## 🎯 Perfect For
-
-- 🏭 **Manufacturing Automation**: Understanding logistics coordination and workflow orchestration
-- 🤖 **Multi-Agent Systems**: Learning agent communication, coordination, and specialization patterns  
-- 📊 **Process Optimization**: Analyzing bottlenecks, resource utilization, and workflow efficiency
-- 🎓 **Educational Projects**: Comprehensive example of production-ready agent system
-- 🔬 **Research & Development**: Foundation for advanced manufacturing intelligence systems
-- 🚀 **Rapid Prototyping**: Quick setup for testing logistics and coordination algorithms
-
----
-
-## 🔧 Troubleshooting
-
-### 🚨 **Common Issues**
-
-**Port already in use:**
-```bash
-pkill -f strands_flask_app.py  # Kill existing processes
-python3 strands_flask_app.py   # Restart server
-```
-
-**Web interface not loading:**
-```bash
-curl -I http://localhost:5555  # Test connectivity
-# Check terminal for error messages
-```
-
-**Dependencies missing:**
-```bash
-pip install -r requirements.txt  # Reinstall packages
-python3 --version              # Verify Python 3.12+
-```
-
----
-
-## 🚀 Get Started
-
-**Ready to see intelligent agents in action?**
-
-```bash
-# 1. Clone and setup
-git clone [repository-url]
-cd Logistics_Multi_Agents_Strands
-pip install -r requirements.txt
-
-# 2. Launch the system
-python3 strands_flask_app.py
-
-# 3. Open your browser
-# → Navigate to http://localhost:5555
-# → Submit a request for HYDRAULIC-PUMP-HP450
-# → Watch 22+ live messages stream from the agents
-# → See complete AGV lifecycle from pickup to delivery
-```
-
-### 🎯 **What You'll Experience**
-
-- **Real-time agent coordination** with live message streaming
-- **Complete AGV lifecycle tracking** from mission acceptance to completion
-- **Interactive web dashboard** with progress visualization
-- **Intelligent workflow orchestration** across four specialized agents
-
-### � **Perfect For**
-
-- **Learning multi-agent systems** and coordination patterns
-- **Understanding manufacturing logistics** automation
-- **Exploring real-time web interfaces** with Server-Sent Events
-- **Building on top of** the agent architecture for your own projects
-
-**Start exploring intelligent logistics automation now! 🤖**
-
----
-
-*A sophisticated multi-agent system demonstrating real-world logistics coordination*
+The system is production-ready for autonomous logistics operations! 🚀
