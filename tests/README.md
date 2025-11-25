@@ -84,7 +84,7 @@ Before running tests, ensure:
 
 3. **Dependencies are installed**:
    ```bash
-   pip install pandas strands ollama
+   pip install -r requirements.txt
    ```
 
 4. **Virtual environment is activated** (if using one):

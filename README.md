@@ -14,7 +14,6 @@ This system demonstrates advanced multi-agent coordination in logistics operatio
 │   ├── agent_factory.py       # AgentFactory for creating specialized agents
 │   ├── data_setup.py          # Initial data setup and DataFrames
 │   ├── main.py               # Main execution script
-│   ├── requirements.py       # Dependencies and imports
 │   ├── data/                 # Data management modules
 │   │   ├── inventory_data.py
 │   │   ├── fleet_data.py
@@ -36,6 +35,7 @@ This system demonstrates advanced multi-agent coordination in logistics operatio
 │   ├── __init__.py
 │   ├── test_agents.py      # Comprehensive test suite
 │   └── run_tests.py        # Test runner script
+├── requirements.txt         # Python dependencies
 └── README.md               # This file
 ```
 
@@ -105,8 +105,7 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 2. **Install dependencies:**
 ```bash
-cd Agents
-pip install -r requirements.py
+pip install -r requirements.txt
 ```
 
 3. **Start Ollama:**
