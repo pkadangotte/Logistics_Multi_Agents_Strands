@@ -4,3 +4,7 @@ strands-tools>=0.1.0
 ollama>=0.1.0
 pyyaml>=6.0
 jsonschema>=4.0.0
+
+# Testing dependencies
+pytest>=6.0.0
+pytest-cov>=2.10.0

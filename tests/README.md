@@ -1,72 +1,103 @@
 # Tests Directory
 
-This directory contains the comprehensive test suite for the Logistics Multi-Agent System.
+This directory contains the test suite for the Logistics Multi-Agent System, organized into individual test modules for better CI/CD integration and maintainability.
 
-## Test Files
+## Test Structure
 
-### `test_agents.py`
-The main test module containing:
-- **Enhanced test suite** with 7 different test scenarios
-- **Agent creation validation** 
-- **Individual agent function tests**
-- **Multi-agent orchestration tests**
-- **Agent discovery and communication tests**
-- **Emergency/urgent request simulations**
-- **Interactive test selection**
+### Test Modules
 
-### `run_tests.py`
-Convenient test runner script that:
-- Automatically sets up the system
-- Initializes all data managers and agents
-- Runs the interactive test suite
-- Provides clear error messages and guidance
+- **`test_agent_creation.py`** - Tests for agent creation and basic functionality
+- **`test_inventory_agent.py`** - Tests specific to inventory agent operations  
+- **`test_fleet_agent.py`** - Tests specific to fleet management agent operations
+- **`test_approval_agent.py`** - Tests specific to approval workflow agent operations
+- **`test_orchestration.py`** - Tests for orchestration and integration between agents
 
-### `__init__.py`
-Package initialization file that exports the main testing functions.
+### Configuration Files
+
+- **`conftest.py`** - Shared pytest fixtures and utilities
+- **`../pyproject.toml`** - pytest configuration and coverage settings
+- **`../run_tests.py`** - Local test runner script (moved to project root)
+
+### Supporting Files
+
+- **`__init__.py`** - Package initialization file
 
 ## Running Tests
 
-### Method 1: Test Runner (Recommended)
+### Individual Test Modules
+
+Run specific test modules using pytest directly:
+
 ```bash
-# From the root directory
-python tests/run_tests.py
+# Test agent creation
+python -m pytest tests/test_agent_creation.py -v
+
+# Test inventory agent
+python -m pytest tests/test_inventory_agent.py -v
+
+# Test fleet agent
+python -m pytest tests/test_fleet_agent.py -v
+
+# Test approval agent
+python -m pytest tests/test_approval_agent.py -v
+
+# Test orchestration
+python -m pytest tests/test_orchestration.py -v
 ```
 
-### Method 2: Direct Execution
+### All Tests
+
+Run all tests:
+
 ```bash
-# From the tests directory
-cd tests
-python test_agents.py
+python -m pytest tests/ -v
 ```
 
-### Method 3: Programmatic Usage
-```python
-import sys
-sys.path.append('Agents')
+### With Coverage
 
-from agent_factory import initialize_agent_factory
-from data_setup import setup_all_data_managers
-from tests.test_agents import main_enhanced_testing
+Run tests with coverage reporting:
 
-# Setup system
-inv_mgr, fleet_mgr, approval_mgr = setup_all_data_managers()
-factory = initialize_agent_factory(inv_mgr, fleet_mgr, approval_mgr)
-
-# Run tests
-main_enhanced_testing(factory)
+```bash
+python -m pytest tests/ --cov=Agents --cov-report=term-missing --cov-report=html
 ```
 
-## Test Scenarios
+### Using Test Runner
 
-The test suite includes 7 comprehensive test scenarios:
+Use the provided test runner script:
 
-1. **Basic Agent Creation Tests** - Validates agent creation and configuration
-2. **Individual Agent Function Tests** - Tests each agent type's specific functions
-3. **Agent Discovery & Communication Tests** - Tests A2A communication capabilities
-4. **Complex Orchestration with Discovery** - Multi-phase complex logistics operations
-5. **Urgent Request Simulation** - Emergency scenario handling
-6. **Full Integration Test Suite** - Comprehensive system testing
-7. **Run All Tests** - Executes all available tests
+```bash
+# Run specific module
+python run_tests.py agent_creation
+python run_tests.py inventory_agent
+python run_tests.py fleet_agent
+python run_tests.py approval_agent
+python run_tests.py orchestration
+
+# Run all tests
+python run_tests.py all
+
+# Run with coverage
+python run_tests.py coverage
+```
+
+## CI/CD Integration
+
+The test suite is designed for CI/CD pipelines:
+
+- **GitHub Actions**: See `.github/workflows/ci.yml` for automated testing
+- **Individual Execution**: Each test module can be run independently
+- **Coverage Reporting**: Integrated with codecov for coverage tracking
+- **Multiple Python Versions**: Tested against Python 3.8, 3.9, 3.10, 3.11
+
+## Test Fixtures
+
+The `conftest.py` file provides shared fixtures:
+
+- **`data_managers`** - Session-scoped data providers
+- **`agent_factory`** - Session-scoped agent factory  
+- **`test_agents`** - Function-scoped test agents for all types
+- **Individual agent fixtures** - Function-scoped single agents
+- **Helper functions** - Validation utilities
 
 ## Prerequisites
 
