@@ -6,9 +6,9 @@ Contains the AgentFactory for creating specialized agents.
 from typing import Optional
 from strands.models.ollama import OllamaModel
 from generic_agent import GenericAgent
-from inventory_tools import InventoryAgentToolProvider
-from fleet_tools import FleetAgentToolProvider
-from approval_tools import ApprovalAgentToolProvider
+from tool_providers.inventory_tools import InventoryAgentToolProvider
+from tool_providers.fleet_tools import FleetAgentToolProvider
+from tool_providers.approval_tools import ApprovalAgentToolProvider
 
 class AgentFactory:
     """Factory for creating specialized logistics agents."""

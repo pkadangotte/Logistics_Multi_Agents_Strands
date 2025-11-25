@@ -7,9 +7,9 @@ from requirements import *
 from data_setup import initialize_dataframes
 from agent_factory import initialize_agent_factory
 from test_agents import main_enhanced_testing, run_test_suite, display_test_menu
-from inventory_data_provider import InventoryDataProvider
-from fleet_data_provider import FleetDataProvider
-from approval_data_provider import ApprovalDataProvider
+from data_providers.inventory_data_provider import InventoryDataProvider
+from data_providers.fleet_data_provider import FleetDataProvider
+from data_providers.approval_data_provider import ApprovalDataProvider
 
 
 def display_main_menu():
