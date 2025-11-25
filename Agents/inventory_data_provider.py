@@ -1,6 +1,6 @@
 """
-Inventory Data Manager Module
-Provides the InventoryDataManager class for inventory management operations.
+Inventory Data Provider Module
+Provides the InventoryDataProvider class for inventory management operations.
 """
 
 from datetime import datetime
@@ -8,7 +8,7 @@ import json
 from typing import Dict, List, Union
 
 
-class InventoryDataManager:
+class InventoryDataProvider:
     """
     Data access class for inventory management operations.
     Provides methods to query, reserve, and manage inventory data.
@@ -260,7 +260,7 @@ class InventoryDataManager:
 
 def initialize_inventory_manager(inventory_df):
     """Initialize the inventory manager with the provided DataFrame."""
-    manager = InventoryDataManager(inventory_df)
+    manager = InventoryDataProvider(inventory_df)
     
     print("✅ Inventory Data Manager initialized!")
     print(f"📊 Managing {len(inventory_df)} parts")

@@ -1,6 +1,6 @@
 """
-Fleet Data Manager Module
-Provides the FleetDataManager class for AGV fleet management operations.
+Fleet Data Provider Module
+Provides the FleetDataProvider class for AGV fleet management operations.
 """
 
 from datetime import datetime, timedelta
@@ -8,7 +8,7 @@ import json
 from typing import Dict, List, Union
 
 
-class FleetDataManager:
+class FleetDataProvider:
     """
     Data access class for AGV fleet management operations.
     Provides methods to query, schedule, and manage AGV fleet data.
@@ -302,7 +302,7 @@ class FleetDataManager:
 
 def initialize_fleet_manager(agv_df, routes_df):
     """Initialize the fleet manager with the provided DataFrames."""
-    manager = FleetDataManager(agv_df, routes_df)
+    manager = FleetDataProvider(agv_df, routes_df)
     
     print("✅ Fleet Data Manager initialized!")
     print(f"🚛 Managing {len(agv_df)} AGVs")

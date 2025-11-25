@@ -5,11 +5,11 @@ Provides options for different testing modes including agent discovery functiona
 
 from requirements import *
 from data_setup import initialize_dataframes
-from agents import initialize_agent_factory
+from agent_factory import initialize_agent_factory
 from test_agents import main_enhanced_testing, run_test_suite, display_test_menu
-from inventory_manager import InventoryDataManager
-from fleet_manager import FleetDataManager
-from approval_manager import ApprovalDataManager
+from inventory_data_provider import InventoryDataProvider
+from fleet_data_provider import FleetDataProvider
+from approval_data_provider import ApprovalDataProvider
 
 
 def display_main_menu():
@@ -132,9 +132,9 @@ def main():
         inventory_df, agv_df, routes_df, approval_df = initialize_dataframes()
         
         # Create data managers
-        inventory_manager = InventoryDataManager(inventory_df)
-        fleet_manager = FleetDataManager(agv_df, routes_df)
-        approval_manager = ApprovalDataManager(approval_df)
+        inventory_manager = InventoryDataProvider(inventory_df)
+        fleet_manager = FleetDataProvider(agv_df, routes_df)
+        approval_manager = ApprovalDataProvider(approval_df)
         print("✅ Data setup completed")
         
         print("🏭 Initializing agent factory...")

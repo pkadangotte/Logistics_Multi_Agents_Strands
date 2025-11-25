@@ -1,6 +1,6 @@
 """
-Approval Data Manager Module
-Provides the ApprovalDataManager class for approval workflow operations.
+Approval Data Provider Module
+Provides the ApprovalDataProvider class for approval workflow operations.
 """
 
 from datetime import datetime
@@ -8,7 +8,7 @@ import uuid
 from typing import Dict, List, Union
 
 
-class ApprovalDataManager:
+class ApprovalDataProvider:
     """
     Data access class for approval workflow operations.
     Provides methods to manage approvals, compliance checks, and authorization workflows.
@@ -372,7 +372,7 @@ class ApprovalDataManager:
 
 def initialize_approval_manager(approval_df):
     """Initialize the approval manager with the provided DataFrame."""
-    manager = ApprovalDataManager(approval_df)
+    manager = ApprovalDataProvider(approval_df)
     
     print("✅ Approval Data Manager initialized!")
     print(f"⚖️ Managing {len(approval_df)} approval thresholds")
